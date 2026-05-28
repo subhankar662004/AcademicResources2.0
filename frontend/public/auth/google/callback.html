@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Google Auth</title></head>
+<body>
+<script>
+  try {
+    var params = new URLSearchParams(window.location.hash.slice(1));
+    var id_token = params.get('id_token');
+    var error    = params.get('error');
+    if (window.opener && !window.opener.closed) {
+      // Use '*' so the message reaches the opener regardless of origin differences
+      // (e.g. opener on no-port domain, callback on :3000).
+      // Security: the receiver validates the message type; the id_token itself is
+      // short-lived and verified server-side against Google's public keys.
+      window.opener.postMessage({ type: 'GOOGLE_AUTH', id_token: id_token, error: error }, '*');
+    }
+  } catch(e) {}
+  window.close();
+</script>
+</body>
+</html>
