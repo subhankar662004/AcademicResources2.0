@@ -60,7 +60,12 @@ app.use(cors({
     if (!origin) return callback(null, true);
     try {
       const { hostname } = new URL(origin);
-      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isLocalhost =
+  hostname === 'localhost' ||
+  hostname === '127.0.0.1' ||
+  hostname.startsWith('10.') ||
+  hostname.startsWith('192.168.') ||
+  hostname.startsWith('172.');
       const isReplit = hostname.endsWith('.replit.dev') || hostname.endsWith('.repl.co') || hostname.endsWith('.replit.app');
       const isVercel = hostname.endsWith('.vercel.app');
       const isRender = hostname.endsWith('.onrender.com');

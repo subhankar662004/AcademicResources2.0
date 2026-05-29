@@ -113,8 +113,6 @@ router.post("/generate", verifyToken, async (req, res) => {
     /* Input validation */
     if (!moduleText?.trim())
       return res.status(400).json({ message: "moduleText is required." });
-    if (moduleText.trim().length < 80)
-      return res.status(400).json({ message: "Text is too short. Paste at least 80 characters of study material." });
 
     /* Count validation */
     const validCount = Math.min(30, Math.max(5, Number(count) || 10));
@@ -124,17 +122,25 @@ router.post("/generate", verifyToken, async (req, res) => {
       return res.status(429).json({ message: "Too many requests. You can generate up to 10 times per hour." });
 
     /* Build prompt */
-    const diffLine = difficulty ? `Difficulty: ${difficulty}.\n` : '';
-    const prompt =
-      `Generate exactly ${validCount} MCQ questions from the study text below.\n` +
-      diffLine +
-      `Rules:\n` +
-      `- Return ONLY a valid JSON array. No markdown, no preamble, no explanation outside the JSON.\n` +
-      `- Each "answer" must be the EXACT text of the correct option (not a letter like A/B/C/D).\n` +
-      `Format:\n` +
-      `[\n  {"question":"...","options":["option1","option2","option3","option4"],"answer":"exact text of correct option","explanation":"brief reason"}\n]\n\n` +
-      `Study Text:\n${moduleText.slice(0, 12000)}`;
+   const cleanText = moduleText.trim();
+const isShortTopic = cleanText.length < 80;
 
+const diffLine = difficulty ? `Difficulty: ${difficulty}.\n` : '';
+
+const prompt =
+  `Generate exactly ${validCount} MCQ questions.\n` +
+  diffLine +
+  `Input type: ${isShortTopic ? "Short topic/keyword" : "Study notes/material"}.\n` +
+  `Topic or study material: ${cleanText.slice(0, 12000)}\n\n` +
+  `Rules:\n` +
+  `- If the input is a short topic like "Java", "OS", "DBMS", "Nursing", or "Agniveer GK", generate relevant MCQs from general knowledge of that topic.\n` +
+  `- If the input is long notes, generate MCQs mainly from those notes.\n` +
+  `- Return ONLY a valid JSON array. No markdown, no preamble, no explanation outside the JSON.\n` +
+  `- Each question must have exactly 4 options.\n` +
+  `- Each "answer" must be the EXACT text of the correct option, not A/B/C/D.\n` +
+  `- Keep questions useful for students and exam practice.\n` +
+  `Format:\n` +
+  `[\n  {"question":"...","options":["option1","option2","option3","option4"],"answer":"exact text of correct option","explanation":"brief reason"}\n]`;
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
