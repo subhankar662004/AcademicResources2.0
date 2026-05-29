@@ -173,27 +173,90 @@ export default function AdminTests() {
     setSubject(''); setDuration(''); setStartTime(''); setEndTime('');
   };
 
-  const createTest = async () => {
-    if (!title.trim()) { toast.error('Title required'); return; }
-    if (!duration)     { toast.error('Duration required'); return; }
-    const res = await fetch(`${API_URL}/api/admin/tests/create`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description: desc, category, subject, duration: Number(duration), startTime: startTime || null, endTime: endTime || null, createdBy: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) { toast.error(data.message || 'Failed'); return; }
-    setTests(t => [data, ...t]); resetForm(); toast.success('Test created!');
-  };
+ const createTest = async () => {
+  if (!title.trim()) {
+    toast.error('Title required');
+    return;
+  }
 
-  const updateTest = async () => {
-    const res = await fetch(`${API_URL}/api/admin/tests/${editingId}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description: desc, category, subject, duration: Number(duration), startTime: startTime || null, endTime: endTime || null }),
-    });
-    const data = await res.json();
-    if (!res.ok) { toast.error(data.message || 'Failed'); return; }
-    toast.edit('Test updated!'); resetForm(); fetchTests();
-  };
+  if (!duration) {
+    toast.error('Duration required');
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    toast.error('Authentication required. Please login again.');
+    return;
+  }
+
+  const res = await fetch(`${API_URL}/api/admin/tests/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      title,
+      description: desc,
+      category,
+      subject,
+      duration: Number(duration),
+      startTime: startTime || null,
+      endTime: endTime || null,
+      createdBy: user?.id || user?._id,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    toast.error(data.message || 'Failed to create test');
+    return;
+  }
+
+  setTests(t => [data, ...t]);
+  resetForm();
+  toast.success('Test created!');
+};
+
+ const updateTest = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    toast.error('Authentication required. Please login again.');
+    return;
+  }
+
+  const res = await fetch(`${API_URL}/api/admin/tests/${editingId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      title,
+      description: desc,
+      category,
+      subject,
+      duration: Number(duration),
+      startTime: startTime || null,
+      endTime: endTime || null,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    toast.error(data.message || 'Failed to update test');
+    return;
+  }
+
+  toast.edit('Test updated!');
+  resetForm();
+  fetchTests();
+};
 
   const startEdit = (t) => {
     setEditingId(t._id); setTitle(t.title || ''); setDesc(t.description || '');
@@ -225,11 +288,24 @@ export default function AdminTests() {
   };
 
   const fetchResults = async (testId) => {
-    setResultTestId(testId); setTestResults([]);
-    const res = await fetch(`${API_URL}/api/admin/tests/${testId}/results`);
-    if (res.ok) setTestResults(await res.json()); else toast.error('Failed to fetch results');
-    setActiveTab('Results');
-  };
+  setResultTestId(testId);
+  setTestResults([]);
+
+  const token = localStorage.getItem('token');
+
+  const res = await fetch(`${API_URL}/api/admin/tests/${testId}/results`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (res.ok) {
+    setTestResults(await res.json());
+  } else {
+    const data = await res.json().catch(() => ({}));
+    toast.error(data.message || 'Failed to fetch results');
+  }
+
+  setActiveTab('Results');
+};
 
   const parseBulkJSON = (text) => {
     try {
@@ -926,18 +1002,47 @@ export default function AdminTests() {
         </div>
       )}
 
-      {confirmDlg && (
-        <ConfirmModal
-          message="Delete this test and all its questions/results? This cannot be undone."
-          type="danger"
-          onConfirm={() => {
-            fetch(`${API_URL}/api/admin/tests/${confirmDlg.id}`, { method: 'DELETE' })
-              .then(() => { fetchTests(); toast.delete('Test deleted'); });
-            setConfirmDlg(null);
-          }}
-          onCancel={() => setConfirmDlg(null)}
-        />
-      )}
+     {confirmDlg && (
+  <ConfirmModal
+    message="Delete this test and all its questions/results? This cannot be undone."
+    type="danger"
+    onConfirm={async () => {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        toast.error('Authentication required. Please login again.');
+        setConfirmDlg(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/admin/tests/${confirmDlg.id}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          toast.error(data.message || 'Failed to delete test');
+          setConfirmDlg(null);
+          return;
+        }
+
+        setTests(prev => prev.filter(t => t._id !== confirmDlg.id));
+        await fetchTests();
+        toast.delete('Test deleted');
+      } catch (error) {
+        toast.error('Connection error while deleting test');
+      } finally {
+        setConfirmDlg(null);
+      }
+    }}
+    onCancel={() => setConfirmDlg(null)}
+  />
+)}
     </div>
   );
 }

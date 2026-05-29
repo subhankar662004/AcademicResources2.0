@@ -178,6 +178,7 @@ function Header() {
     { to: '/category-dashboard', label: 'Dashboard',  Icon: LayoutDashboard, show: !!user && !isAdmin && !isTeacher },
     { to: '/resources',          label: 'Resources',  Icon: BookOpen,        show: !isAdmin, mobile: isTeacher ? false : undefined },
     { to: '/official-tests',     label: 'Official Tests', Icon: Globe,       show: !!user && !isAdmin },
+    { to: '/upload', label: 'Upload', Icon: Upload, show: !!user },
     { to: '/teacher/tests',      label: 'My Tests',   Icon: ClipboardList,   show: isTeacher && !isAdmin, mobile: false },
     { to: '/admin/pending',      label: 'Approvals',  Icon: ClipboardList,   show: isAdmin, mobile: false },
     { to: '/admin/resources',    label: 'Resources',  Icon: BookOpen,        show: isAdmin, mobile: false },
@@ -209,7 +210,7 @@ function Header() {
           {/* Logo */}
           <Link to="/" className="nh-logo">
             <img src={logo} alt="AcadHub" className="nh-logo-img" />
-            <span className="nh-logo-text">AcadHub</span>
+            {/* <span className="nh-logo-text">AcadHub</span> */}
           </Link>
 
           {/* Desktop Nav */}
@@ -268,11 +269,6 @@ function Header() {
                     <Link to="/my-account" className="nh-drop-item">
                       <Settings size={14}/> Settings
                     </Link>
-                    {(isTeacher || isAdmin) && (
-                      <Link to="/upload" className="nh-drop-item">
-                        <Upload size={14}/> Upload Resource
-                      </Link>
-                    )}
                     <div className="nh-drop-divider"/>
                     <button className="nh-drop-item nh-drop-logout" onClick={handleLogout}>
                       <LogOut size={14}/> Sign Out

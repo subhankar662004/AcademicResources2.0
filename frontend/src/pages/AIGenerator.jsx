@@ -34,7 +34,6 @@ function AIGenerator() {
 
   const generate = async () => {
     if (!moduleText.trim()) return toast.error('Please paste some study text first.');
-    if (moduleText.trim().length < 10) return toast.error('Text too short — paste at least 10 characters.');
     setLoading(true); setQuestions([]); setLastError('');
     try {
       const res  = await fetch(`${API_URL}/api/ai-tests/generate`, {
@@ -143,7 +142,7 @@ function AIGenerator() {
                 style={{ resize: 'vertical', fontFamily: 'inherit' }}
               />
               <span className="form-hint" style={{ color: moduleText.length < 10 && moduleText.length > 0 ? '#dc2626' : undefined }}>
-                {moduleText.length} characters · Minimum 10 characters · Max 12 000
+                {moduleText.length} characters · Topic or notes accepted · Max 12 000
               </span>
             </div>
 
@@ -215,7 +214,7 @@ function AIGenerator() {
             <button
               className="btn btn-primary btn-block btn-lg"
               onClick={generate}
-              disabled={loading || !moduleText.trim() || moduleText.trim().length < 10}
+              disabled={loading || !moduleText.trim()}
             >
               {loading
                 ? <><Loader2 size={16} className="spin" /> Generating {count} {difficulty} questions…</>

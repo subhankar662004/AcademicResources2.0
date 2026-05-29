@@ -91,7 +91,11 @@ function Upload() {
       const data = await res.json();
       if (!res.ok) { toast.error(data.message || 'Upload failed'); }
       else {
-        toast.success('Resource uploaded! Pending admin approval.');
+        toast.success(
+  user?.role === 'admin'
+    ? 'Resource uploaded and approved successfully!'
+    : 'Resource uploaded! Pending admin approval.'
+);
         setTitle(''); setDescription(''); setSelectedFile(null); setFolder('');
       }
     } catch { toast.error('Connection error. Please try again.'); }
@@ -215,8 +219,10 @@ function Upload() {
               </div>
 
               <p className="form-hint" style={{ marginTop: 16 }}>
-                Your resource will be visible after admin approval. This usually takes less than 24 hours.
-              </p>
+  {user?.role === 'admin'
+    ? 'Admin uploads will be published directly.'
+    : 'Your resource will be visible after admin approval. This usually takes less than 24 hours.'}
+</p>
             </div>
           </form>
         </div>
