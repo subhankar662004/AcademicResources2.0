@@ -19,9 +19,9 @@ router.post("/submit/:testId", verifyToken, async (req, res) => {
     }
 
     const now = new Date();
-
     const isScheduledTest = test.startTime && test.endTime;
 
+    // Scheduled time restriction
     if (isScheduledTest) {
       if (now < new Date(test.startTime)) {
         return res.status(403).json({
@@ -34,19 +34,21 @@ router.post("/submit/:testId", verifyToken, async (req, res) => {
           message: "This test has ended"
         });
       }
+    }
 
-      if (test.allowMultipleAttempts === false) {
-  const previousResult = await Result.findOne({
-    userId,
-    testId
-  });
+    // One-attempt restriction
+    // Only when admin selected "Only One Attempt"
+    if (test.allowMultipleAttempts === false) {
+      const previousResult = await Result.findOne({
+        userId,
+        testId
+      });
 
-  if (previousResult) {
-    return res.status(409).json({
-      message: "You have already attempted this test"
-    });
-  }
-}
+      if (previousResult) {
+        return res.status(409).json({
+          message: "You have already attempted this test"
+        });
+      }
     }
 
     const questions = await Question.find({ testId });
@@ -54,7 +56,7 @@ router.post("/submit/:testId", verifyToken, async (req, res) => {
     let score = 0;
 
     questions.forEach(q => {
-      if (answers[q._id.toString()] === q.answer) {
+      if (answers?.[q._id.toString()] === q.answer) {
         score++;
       }
     });
@@ -69,11 +71,18 @@ router.post("/submit/:testId", verifyToken, async (req, res) => {
 
     await result.save();
 
-    res.json({
-      score,
-      total: questions.length,
-      resultId: result._id
-    });
+    const correctAnswers = {};
+
+questions.forEach(q => {
+  correctAnswers[q._id.toString()] = q.answer;
+});
+
+res.json({
+  score,
+  total: questions.length,
+  resultId: result._id,
+  correctAnswers
+});
 
   } catch (error) {
     res.status(500).json({

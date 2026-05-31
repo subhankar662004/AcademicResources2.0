@@ -533,32 +533,33 @@ const fetchCategories = async () => {
               <label className="at2-label">End Time <span className="at2-optional">optional</span></label>
               <input className="at2-input" type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} />
             </div>
-            <div className="at2-field at2-span2">
+           <div className="at2-field at2-span2">
   <label className="at2-label">Attempt Permission</label>
 
-  <div className="at2-cat-picker">
+  <div className="at2-attempt-toggle">
     <button
       type="button"
-      className={`at2-cat-pill ${allowMultipleAttempts ? 'at2-cat-pill-active' : ''}`}
+      className={`at2-attempt-btn ${allowMultipleAttempts ? 'at2-attempt-active-multiple' : ''}`}
       onClick={() => setAllowMultipleAttempts(true)}
     >
+      <span className="at2-attempt-dot" />
       Multiple Attempts
     </button>
 
     <button
       type="button"
-      className={`at2-cat-pill ${!allowMultipleAttempts ? 'at2-cat-pill-active' : ''}`}
+      className={`at2-attempt-btn ${!allowMultipleAttempts ? 'at2-attempt-active-one' : ''}`}
       onClick={() => setAllowMultipleAttempts(false)}
     >
+      <span className="at2-attempt-dot" />
       Only One Attempt
     </button>
   </div>
 
-  <p style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
+  <p className="at2-attempt-help">
     Default: Multiple attempts allowed. Choose “Only One Attempt” if each student can submit only once.
   </p>
 </div>
-
 
           </div>
 

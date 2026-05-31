@@ -56,7 +56,16 @@ router.get("/tests/submission-counts", verifyTeacher, async (req, res) => {
 /* ══ POST /api/teacher/tests — create test ══ */
 router.post("/tests", verifyTeacher, async (req, res) => {
   try {
-    const { title, description, category, subject, duration, startTime, endTime } = req.body;
+    const {
+  title,
+  description,
+  category,
+  subject,
+  duration,
+  startTime,
+  endTime,
+  allowMultipleAttempts
+} = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title is required" });
     if (!duration)      return res.status(400).json({ message: "Duration is required" });
 
@@ -68,6 +77,7 @@ router.post("/tests", verifyTeacher, async (req, res) => {
       duration: Number(duration),
       startTime: startTime || null,
       endTime:   endTime   || null,
+      allowMultipleAttempts: allowMultipleAttempts !== undefined ? allowMultipleAttempts : true,
       teacherId:   req.user._id,
       teacherName: req.user.name,
       createdBy:   req.user._id.toString(),
@@ -85,7 +95,16 @@ router.put("/tests/:id", verifyTeacher, async (req, res) => {
     const test = await Test.findOne({ _id: req.params.id, teacherId: req.user._id });
     if (!test) return res.status(404).json({ message: "Test not found" });
 
-    const { title, description, category, subject, duration, startTime, endTime } = req.body;
+    const {
+  title,
+  description,
+  category,
+  subject,
+  duration,
+  startTime,
+  endTime,
+  allowMultipleAttempts
+} = req.body;
     Object.assign(test, {
       title:       title?.trim() || test.title,
       description: description?.trim() ?? test.description,
@@ -94,6 +113,7 @@ router.put("/tests/:id", verifyTeacher, async (req, res) => {
       duration:    duration ? Number(duration) : test.duration,
       startTime:   startTime || null,
       endTime:     endTime   || null,
+      allowMultipleAttempts: allowMultipleAttempts !== undefined ? allowMultipleAttempts : test.allowMultipleAttempts,
     });
     await test.save();
     res.json(test);
@@ -257,6 +277,7 @@ router.post("/tests/:id/duplicate", verifyTeacher, async (req, res) => {
       duration:    src.duration,
       startTime:   null,
       endTime:     null,
+      allowMultipleAttempts: src.allowMultipleAttempts !== false,
       teacherId:   req.user._id,
       teacherName: req.user.name,
       createdBy:   req.user._id.toString(),
@@ -300,17 +321,35 @@ router.get("/share/:shareCode/my-result", async (req, res) => {
     const test = await Test.findOne({ shareCode: req.params.shareCode, isPublic: true });
     if (!test) return res.status(404).json({ message: "Test not found" });
     const existing = await Result.findOne({ userId, testId: test._id });
-    if (!existing) return res.json({ alreadySubmitted: false });
-    const pct = existing.total ? Math.round((existing.score / existing.total) * 100) : 0;
-    res.json({
-      alreadySubmitted: true,
-      result: {
-        score: existing.score,
-        total: existing.total,
-        pct,
-        submittedAt: existing.submittedAt,
-      },
-    });
+
+if (!existing) {
+  return res.json({
+    alreadySubmitted: false,
+    allowMultipleAttempts: test.allowMultipleAttempts !== false
+  });
+}
+
+// Multiple Attempts allowed hole alreadySubmitted false pathabo
+if (test.allowMultipleAttempts !== false) {
+  return res.json({
+    alreadySubmitted: false,
+    allowMultipleAttempts: true
+  });
+}
+
+// Only One Attempt hole alreadySubmitted true
+const pct = existing.total ? Math.round((existing.score / existing.total) * 100) : 0;
+
+res.json({
+  alreadySubmitted: true,
+  allowMultipleAttempts: false,
+  result: {
+    score: existing.score,
+    total: existing.total,
+    pct,
+    submittedAt: existing.submittedAt,
+  },
+});
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -383,8 +422,15 @@ router.post("/take/:testId/submit", async (req, res) => {
       return res.status(403).json({ message: "This test has ended" });
 
     /* Duplicate check */
-    const existing = await Result.findOne({ userId, testId: test._id });
-    if (existing) return res.status(409).json({ message: "You have already submitted this test" });
+   if (test.allowMultipleAttempts === false) {
+  const existing = await Result.findOne({ userId, testId: test._id });
+
+  if (existing) {
+    return res.status(409).json({
+      message: "You have already submitted this test"
+    });
+  }
+}
 
     const questions = await Question.find({ testId: test._id });
     let score = 0;

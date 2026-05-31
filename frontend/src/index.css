@@ -9823,3 +9823,93 @@ body.test-active-mode .btm-bar {
     width: 50px !important;
   }
 }
+
+/* Admin Tests - Attempt Permission Toggle */
+.at2-attempt-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  flex-wrap: wrap;
+}
+
+.at2-attempt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.at2-attempt-btn:hover {
+  background: #ffffff;
+  color: #334155;
+  border-color: #dbeafe;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.at2-attempt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.at2-attempt-active-multiple {
+  background: linear-gradient(135deg, #2563eb, #6366f1);
+  color: #ffffff;
+  border-color: #93c5fd;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.28);
+}
+
+.at2-attempt-active-multiple .at2-attempt-dot {
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.22);
+}
+
+.at2-attempt-active-one {
+  background: linear-gradient(135deg, #f97316, #dc2626);
+  color: #ffffff;
+  border-color: #fdba74;
+  box-shadow: 0 10px 22px rgba(220, 38, 38, 0.22);
+}
+
+.at2-attempt-active-one .at2-attempt-dot {
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.22);
+}
+
+.at2-attempt-help {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .at2-attempt-toggle {
+    width: 100%;
+    border-radius: 16px;
+    display: flex;
+  }
+
+  .at2-attempt-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}

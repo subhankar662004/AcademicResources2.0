@@ -9,11 +9,14 @@ import {
   Trash2, CheckCircle, XCircle, AlertTriangle, Loader2, RotateCcw,
   BookOpen, Trophy, Target, Zap, Shield, Calendar, Timer,
   ListChecks, Eye, EyeOff, Award, TrendingUp, Minus, Star,
-  Send, Flag,
+  Send, Flag, Users,
 } from 'lucide-react';
 
 const fmt     = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const LETTERS = ['A', 'B', 'C', 'D'];
+const getQuestionText = (q) => {
+  return q.title || q.question || q.text || q.questionText || 'Question text not available';
+};
 
 function DiffBadge({ dur }) {
   if (!dur) return null;
@@ -88,6 +91,7 @@ export default function Test() {
   const { user }       = useAuth();
   const navigate       = useNavigate();
   const selectedCategory = localStorage.getItem('selectedCategory');
+  const isRestrictedTest = currentTest?.allowMultipleAttempts === false;
   const pgTests   = usePagination(tests, 9);
   const pgAiTests = usePagination(aiTests, 9);
 
@@ -130,76 +134,104 @@ export default function Test() {
     return () => clearInterval(t);
   }, [selectedTest, result, submitted]);
 
-  useEffect(() => {
-    if (!selectedTest || result) return;
+useEffect(() => {
+  if (!selectedTest || result || submitted) return;
 
-    const lastViolateRef = { current: 0 };
+  // Restriction only for Only One Attempt tests
+  if (!isRestrictedTest) return;
 
-    const violate = (reason) => {
-      const now = Date.now();
-      if (now - lastViolateRef.current < 1500) return;
-      lastViolateRef.current = now;
-      setTabSwitchCount(prev => {
-        const n = prev + 1;
-        setWarning(
-          n >= 3
-            ? `Test auto-submitted: ${reason}`
-            : `Violation ${n}/3: ${reason}. Test submits on 3rd violation.`
-        );
-        if (n >= 3) handleSubmit();
-        return n;
-      });
-    };
+  let lastViolationTime = 0;
 
-    const onVisibility = () => { if (document.hidden) violate("You switched to another tab"); };
-    const onBlur       = () => violate("You left the test window");
-    const onMouseLeave = (e) => { if (e.relatedTarget === null) violate("You moved outside the test window"); };
-    const onFSChange   = () => { if (!document.fullscreenElement) violate("You exited fullscreen mode"); };
-    const onCtxMenu    = (e) => e.preventDefault();
-    const onCopy       = (e) => e.preventDefault();
-    const onCut        = (e) => e.preventDefault();
-    const onKeyDown    = (e) => {
-      // DevTools & view source
-      if (e.key === 'F12') { e.preventDefault(); return; }
-      if (e.ctrlKey && e.shiftKey && ['I','J','C','K'].includes(e.key.toUpperCase())) { e.preventDefault(); return; }
-      if (e.ctrlKey && ['U','A','P'].includes(e.key.toUpperCase())) { e.preventDefault(); return; }
-      // Keyboard navigation lock — window/app switching
-      if (e.altKey  && e.key === 'Tab')  { e.preventDefault(); violate('Alt+Tab detected'); return; }
-      if (e.altKey  && e.key === 'F4')   { e.preventDefault(); return; }
-      if (e.metaKey && e.key === 'Tab')  { e.preventDefault(); violate('Cmd+Tab detected'); return; }
-      if (e.metaKey && ['d','D','h','H','m','M'].includes(e.key)) { e.preventDefault(); violate('Window shortcut detected'); return; }
-      // Escape exits fullscreen — block at JS level
-      if (e.key === 'Escape' && document.fullscreenElement) { e.preventDefault(); return; }
-    };
+  const violate = (reason) => {
+    const now = Date.now();
 
-    // Heartbeat: poll every 2 s — catches floating windows that don't trigger events
-    const heartbeat = setInterval(() => {
-      if (!document.hasFocus()) violate("Window lost focus — floating window or other app detected");
-      if (!document.fullscreenElement) violate("Fullscreen was exited");
-    }, 2000);
+    // duplicate event prevent
+    if (now - lastViolationTime < 1500) return;
+    lastViolationTime = now;
 
-    document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('blur', onBlur);
-    document.addEventListener('mouseleave', onMouseLeave);
-    document.addEventListener('fullscreenchange', onFSChange);
-    document.addEventListener('contextmenu', onCtxMenu);
-    document.addEventListener('copy', onCopy);
-    document.addEventListener('cut', onCut);
-    document.addEventListener('keydown', onKeyDown);
+    setTabSwitchCount(prev => {
+      const next = prev + 1;
 
-    return () => {
-      clearInterval(heartbeat);
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('blur', onBlur);
-      document.removeEventListener('mouseleave', onMouseLeave);
-      document.removeEventListener('fullscreenchange', onFSChange);
-      document.removeEventListener('contextmenu', onCtxMenu);
-      document.removeEventListener('copy', onCopy);
-      document.removeEventListener('cut', onCut);
-      document.removeEventListener('keydown', onKeyDown);
-      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    };
-  }, [selectedTest, result]);
+      if (next === 1) {
+        setWarning(`Warning: ${reason}. Next violation will auto-submit your test.`);
+        alert(`Warning: ${reason}. Next violation will auto-submit your test.`);
+      }
+
+      if (next >= 2) {
+        setWarning(`Test auto-submitted: ${reason}`);
+        alert(`Test auto-submitted: ${reason}`);
+        handleSubmit();
+      }
+
+      return next;
+    });
+  };
+
+  const onVisibility = () => {
+    if (document.hidden) violate("You switched tab");
+  };
+
+  const onBlur = () => {
+    violate("You left the test window");
+  };
+
+  const onContextMenu = (e) => {
+    e.preventDefault();
+    violate("Right click detected");
+  };
+
+  const onCopy = (e) => {
+    e.preventDefault();
+    violate("Copy is not allowed");
+  };
+
+  const onCut = (e) => {
+    e.preventDefault();
+    violate("Cut is not allowed");
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === 'F12') {
+      e.preventDefault();
+      violate("Developer tools shortcut detected");
+      return;
+    }
+
+    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'K'].includes(e.key.toUpperCase())) {
+      e.preventDefault();
+      violate("Developer tools shortcut detected");
+      return;
+    }
+
+    if (e.ctrlKey && ['U', 'A', 'P'].includes(e.key.toUpperCase())) {
+      e.preventDefault();
+      violate("Restricted keyboard shortcut detected");
+      return;
+    }
+
+    if (e.altKey && e.key === 'Tab') {
+      e.preventDefault();
+      violate("Alt + Tab detected");
+      return;
+    }
+  };
+
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('blur', onBlur);
+  document.addEventListener('contextmenu', onContextMenu);
+  document.addEventListener('copy', onCopy);
+  document.addEventListener('cut', onCut);
+  document.addEventListener('keydown', onKeyDown);
+
+  return () => {
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('blur', onBlur);
+    document.removeEventListener('contextmenu', onContextMenu);
+    document.removeEventListener('copy', onCopy);
+    document.removeEventListener('cut', onCut);
+    document.removeEventListener('keydown', onKeyDown);
+  };
+}, [selectedTest, result, submitted, isRestrictedTest]);
 
   useEffect(() => { localStorage.setItem('testAnswers', JSON.stringify(answers)); }, [answers]);
 
@@ -214,16 +246,19 @@ export default function Test() {
     if (test.endTime   && now > new Date(test.endTime))   return setWarning('This test has already ended.');
     if (!test.duration || Number(test.duration) <= 0)     return setWarning('Test duration is missing. Contact admin.');
 
-    try {
-      await document.documentElement.requestFullscreen();
-    } catch {
-      setWarning('Fullscreen is required to take this test. Please allow fullscreen in your browser and try again.');
-      return;
-    }
-    if (!document.fullscreenElement) {
-      setWarning('Could not enter fullscreen. Please allow fullscreen and try again.');
-      return;
-    }
+    if (test.allowMultipleAttempts === false) {
+  try {
+    await document.documentElement.requestFullscreen();
+  } catch {
+    setWarning('Fullscreen is required for one-attempt tests. Please allow fullscreen and try again.');
+    return;
+  }
+
+  if (!document.fullscreenElement) {
+    setWarning('Could not enter fullscreen. Please allow fullscreen and try again.');
+    return;
+  }
+}
 
     setLoadingTest(test._id);
     fetch(`${API_URL}/api/admin/tests/${test._id}/questions`)
@@ -234,8 +269,12 @@ export default function Test() {
         setCurrentTest(test);
         setTimeLeft(Number(test.duration) * 60);
         startTimeRef.current = Date.now();
-        setResult(null); setSubmitted(false);
-        setAnswers({}); setWarning(''); setActiveQ(0);
+        setResult(null);
+setSubmitted(false);
+setAnswers({});
+setWarning('');
+setActiveQ(0);
+setTabSwitchCount(0);
         localStorage.removeItem('testAnswers');
       })
       .catch(() => setWarning('Failed to load questions. Please try again.'))
@@ -254,10 +293,16 @@ export default function Test() {
     const elapsed = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
     setTimeTaken(elapsed);
     try {
-      const res  = await fetch(`${API_URL}/api/testSubmission/submit/${selectedTest}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers, userId: user?.id }),
-      });
+     const token = localStorage.getItem('token');
+
+const res = await fetch(`${API_URL}/api/testSubmission/submit/${selectedTest}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({ answers }),
+});
       const data = await res.json();
       if (!res.ok) { setWarning(data.message || 'Submission failed.'); setSubmitted(false); return; }
       localStorage.removeItem('testAnswers');
@@ -276,17 +321,30 @@ export default function Test() {
   };
 
   const resetTest = () => {
-    setSelectedTest(null); setCurrentTest(null);
-    setQuestions([]); setResult(null);
-    setSubmitted(false); setAnswers({});
-    setTimeLeft(0); setTimeTaken(0); setWarning(''); setActiveQ(0);
-    setShowSubmitModal(false);
-    localStorage.removeItem('testAnswers');
-  };
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.().catch(() => {});
+  }
+
+  setSelectedTest(null);
+  setCurrentTest(null);
+  setQuestions([]);
+  setResult(null);
+  setSubmitted(false);
+  setAnswers({});
+  setTimeLeft(0);
+  setTimeTaken(0);
+  setWarning('');
+  setActiveQ(0);
+  setTabSwitchCount(0);
+  setShowSubmitModal(false);
+  localStorage.removeItem('testAnswers');
+};
 
   const answered   = Object.keys(answers).length;
   const totalQ     = questions.length;
   const unanswered = totalQ - answered;
+  const adminTests = tests.filter(t => !t.teacherId);
+const teacherTests = tests.filter(t => t.teacherId);
   const pct        = totalQ && currentTest?.duration
     ? Math.round((timeLeft / (currentTest.duration * 60)) * 100) : 0;
   const timeColor  = timeLeft < 60 ? '#dc2626' : timeLeft < 300 ? '#d97706' : '#059669';
@@ -325,7 +383,8 @@ export default function Test() {
         {/* stats strip */}
         <div className="test-stats-strip">
           {[
-            { icon: <ClipboardList size={16} color="#2563eb"/>, bg:'#eff6ff', num: tests.length,    label:'Admin Tests' },
+           { icon: <ClipboardList size={16} color="#2563eb"/>, bg:'#eff6ff', num: adminTests.length, label:'Admin Tests' },
+{ icon: <Users size={16} color="#059669"/>, bg:'#f0fdf4', num: teacherTests.length, label:'Teacher Tests' },
             { icon: <Brain size={16} color="#7c3aed"/>,         bg:'#f5f3ff', num: aiTests.length,  label:'AI Practice Sets' },
             { icon: <Target size={16} color="#059669"/>,        bg:'#f0fdf4', num: selectedCategory, label:'Category' },
             { icon: <Zap size={16} color="#d97706"/>,           bg:'#fffbeb', num: 'AI',            label:'Powered' },
@@ -609,15 +668,25 @@ export default function Test() {
           {showNav && (
             <>
               <div className="qnav-legend">
-                <span className="qnav-dot answered"/> Answered
-                <span className="qnav-dot unanswered"/> Pending
-                {result && <><span className="qnav-dot" style={{ background:'#059669' }}/> Correct</>}
-              </div>
+  {!result ? (
+    <>
+      <span className="qnav-dot answered"/> Answered
+      <span className="qnav-dot unanswered"/> Pending
+    </>
+  ) : (
+    <>
+      <span className="qnav-dot" style={{ background:'#059669' }}/> Correct
+      <span className="qnav-dot" style={{ background:'#dc2626' }}/> Wrong
+      <span className="qnav-dot unanswered"/> Skipped
+    </>
+  )}
+</div>
               <div className="qnav-grid">
                 {questions.map((q, idx) => {
-                  const ans     = answers[String(q._id)];
-                  const isRight = result && ans === q.answer;
-                  const isWrong = result && ans && ans !== q.answer;
+                  const ans = answers[String(q._id)];
+const correctAns = result?.correctAnswers?.[String(q._id)];
+const isRight = result && ans && correctAns && ans === correctAns;
+const isWrong = result && ans && correctAns && ans !== correctAns;
                   return (
                     <button
                       key={q._id}
@@ -662,8 +731,9 @@ export default function Test() {
           <div className="questions-list">
             {questions.map((q, idx) => {
               const userAns = answers[String(q._id)];
-              const isRight = result && userAns === q.answer;
-              const isWrong = result && userAns && userAns !== q.answer;
+const correctAns = result?.correctAnswers?.[String(q._id)];
+const isRight = result && userAns && correctAns && userAns === correctAns;
+const isWrong = result && userAns && correctAns && userAns !== correctAns;
               return (
                 <div
                   key={q._id}
@@ -672,22 +742,50 @@ export default function Test() {
                   onClick={() => setActiveQ(idx)}
                 >
                   <div className="qca-topbar">
-                    <div className="qca-num-badge">Q{idx + 1}</div>
-                    {result && (
-                      <div className={`qca-result-badge${isRight ? ' qrb-correct' : isWrong ? ' qrb-wrong' : ' qrb-skip'}`}>
-                        {isRight ? <><CheckCircle size={13}/> Correct</> : isWrong ? <><XCircle size={13}/> Incorrect</> : <><Minus size={13}/> Skipped</>}
-                      </div>
-                    )}
-                    <div className="qca-progress-mini">{idx + 1}/{totalQ}</div>
-                  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+    <div className="qca-num-badge">Q{idx + 1}</div>
 
-                  <h3 className="qca-text">{q.title}</h3>
+  <h3
+  className="qca-text"
+  style={{
+    margin: 0,
+    flex: 1,
+    fontSize: 18,
+    lineHeight: 1.4,
+    wordBreak: 'break-word'
+  }}
+>
+  {getQuestionText(q)}
+</h3>
+
+    {result && (
+      <div className={`qca-result-badge${isRight ? ' qrb-correct' : isWrong ? ' qrb-wrong' : ' qrb-skip'}`}>
+        {isRight ? (
+          <>
+            <CheckCircle size={13}/> Correct
+          </>
+        ) : isWrong ? (
+          <>
+            <XCircle size={13}/> Incorrect
+          </>
+        ) : (
+          <>
+            <Minus size={13}/> Skipped
+          </>
+        )}
+      </div>
+    )}
+  </div>
+
+  <div className="qca-progress-mini">{idx + 1}/{totalQ}</div>
+</div>
 
                   <div className="options-adv">
-                    {q.options.map((opt, i) => {
+                    {(q.options || []).map((opt, i) => {
                       const isSel   = userAns === opt;
-                      const isCorr  = result && opt === q.answer;
-                      const isWrSel = result && isSel && opt !== q.answer;
+                      const correctAns = result?.correctAnswers?.[String(q._id)];
+const isCorr  = result && correctAns && opt === correctAns;
+const isWrSel = result && isSel && correctAns && opt !== correctAns;
                       return (
                         <button
                           key={i}
@@ -704,12 +802,12 @@ export default function Test() {
                     })}
                   </div>
 
-                  {result && isWrong && q.answer && (
-                    <div className="qca-correct-note">
-                      <Award size={13} color="#059669"/>
-                      <span>Correct answer: <strong>{q.answer}</strong></span>
-                    </div>
-                  )}
+                  {result && isWrong && correctAns && (
+  <div className="qca-correct-note">
+    <Award size={13} color="#059669"/>
+    <span>Correct answer: <strong>{correctAns}</strong></span>
+  </div>
+)}
 
                   {!result && (
                     <div className="qca-nav-row">

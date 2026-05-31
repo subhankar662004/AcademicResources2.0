@@ -100,6 +100,7 @@ export default function TeacherDashboard() {
   const [dur,   setDur]     = useState("");
   const [start, setStart]   = useState("");
   const [end,   setEnd]     = useState("");
+  const [allowMultipleAttempts, setAllowMultipleAttempts] = useState(true);
   const [saving, setSaving] = useState(false);
   const [createdTest, setCreatedTest] = useState(null);
 
@@ -201,7 +202,16 @@ export default function TeacherDashboard() {
       const res = await fetch(`${API_URL}/api/teacher/tests`, {
         method: "POST",
         headers: { ...authH, "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description: desc, category: cat, subject: subj, duration: dur, startTime: start ? new Date(start).toISOString() : null, endTime: end ? new Date(end).toISOString() : null }),
+        body: JSON.stringify({
+  title,
+  description: desc,
+  category: cat,
+  subject: subj,
+  duration: dur,
+  startTime: start ? new Date(start).toISOString() : null,
+  endTime: end ? new Date(end).toISOString() : null,
+  allowMultipleAttempts,
+}),
       });
       const data = await res.json();
       if (!res.ok) { notify("error", data.message || "Failed to create test"); return; }
@@ -334,16 +344,34 @@ export default function TeacherDashboard() {
   const startEditTest = (t) => {
     const toLocal = (iso) => iso ? new Date(new Date(iso).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
     setEditTestId(t._id);
-    setEditTestForm({ title: t.title, desc: t.description || '', cat: t.category || '', subj: t.subject || '', dur: t.duration || '', start: toLocal(t.startTime), end: toLocal(t.endTime) });
+   setEditTestForm({
+  title: t.title,
+  desc: t.description || '',
+  cat: t.category || '',
+  subj: t.subject || '',
+  dur: t.duration || '',
+  start: toLocal(t.startTime),
+  end: toLocal(t.endTime),
+  allowMultipleAttempts: t.allowMultipleAttempts !== false,
+});
   };
   const handleSaveEditTest = async (testId) => {
     setEditTestSaving(true);
     try {
-      const { title, desc, cat, subj, dur, start, end } = editTestForm;
+      const { title, desc, cat, subj, dur, start, end, allowMultipleAttempts } = editTestForm;
       const res = await fetch(`${API_URL}/api/teacher/tests/${testId}`, {
         method: 'PUT',
         headers: { ...authH, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description: desc, category: cat, subject: subj, duration: dur, startTime: start ? new Date(start).toISOString() : null, endTime: end ? new Date(end).toISOString() : null }),
+        body: JSON.stringify({
+  title,
+  description: desc,
+  category: cat,
+  subject: subj,
+  duration: dur,
+  startTime: start ? new Date(start).toISOString() : null,
+  endTime: end ? new Date(end).toISOString() : null,
+  allowMultipleAttempts,
+}),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.message || 'Failed to save'); return; }
@@ -473,6 +501,7 @@ export default function TeacherDashboard() {
   const resetCreate = () => {
     setTitle(""); setDesc(""); setCat("General"); setSubj("");
     setDur(""); setStart(""); setEnd("");
+setAllowMultipleAttempts(true);
     setCreatedTest(null); setQuestions([]);
     setQText(""); setOpts(["", "", "", ""]); setAnswerIdx(0); setExpl("");
     setBulkMode(false); setBulkText(''); setBulkResult(null);
@@ -585,6 +614,29 @@ export default function TeacherDashboard() {
                           <label style={{ fontSize:12, fontWeight:600, display:'block', marginBottom:4 }}>End Time</label>
                           <input type="datetime-local" value={editTestForm.end||''} onChange={e=>setEditTestForm(f=>({...f,end:e.target.value}))} style={{ width:'100%', padding:'8px 10px', borderRadius:7, border:'1.5px solid var(--border)', fontSize:13, boxSizing:'border-box' }}/>
                         </div>
+                        <div style={{ gridColumn: '1/-1' }}>
+  <label style={{ fontSize:12, fontWeight:600, display:'block', marginBottom:6 }}>
+    Attempt Permission
+  </label>
+
+  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <button
+      type="button"
+      className={`btn btn-sm ${editTestForm.allowMultipleAttempts !== false ? 'btn-primary' : 'btn-outline'}`}
+      onClick={() => setEditTestForm(f => ({ ...f, allowMultipleAttempts: true }))}
+    >
+      Multiple Attempts
+    </button>
+
+    <button
+      type="button"
+      className={`btn btn-sm ${editTestForm.allowMultipleAttempts === false ? 'btn-primary' : 'btn-outline'}`}
+      onClick={() => setEditTestForm(f => ({ ...f, allowMultipleAttempts: false }))}
+    >
+      Only One Attempt
+    </button>
+  </div>
+</div>
                       </div>
                       <div style={{ display:'flex', gap:8, marginTop:12 }}>
                         <button className="btn btn-primary btn-sm" onClick={() => handleSaveEditTest(t._id)} disabled={editTestSaving}>
@@ -781,6 +833,33 @@ export default function TeacherDashboard() {
                     <label>End Time (optional)</label>
                     <input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/>
                   </div>
+
+<div className="form-group td-span2">
+  <label>Attempt Permission</label>
+
+  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+    <button
+      type="button"
+      className={`btn btn-sm ${allowMultipleAttempts ? "btn-primary" : "btn-outline"}`}
+      onClick={() => setAllowMultipleAttempts(true)}
+    >
+      Multiple Attempts
+    </button>
+
+    <button
+      type="button"
+      className={`btn btn-sm ${!allowMultipleAttempts ? "btn-primary" : "btn-outline"}`}
+      onClick={() => setAllowMultipleAttempts(false)}
+    >
+      Only One Attempt
+    </button>
+  </div>
+
+  <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>
+    Default: Multiple attempts allowed. Only One Attempt will enable fullscreen and anti-cheat restrictions.
+  </p>
+</div>
+
                 </div>
                 <div style={{ display:"flex", gap:12, marginTop:8 }}>
                   <button type="submit" className="btn btn-primary" disabled={saving}>
