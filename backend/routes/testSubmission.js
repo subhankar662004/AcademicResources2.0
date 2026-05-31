@@ -35,16 +35,18 @@ router.post("/submit/:testId", verifyToken, async (req, res) => {
         });
       }
 
-      const previousResult = await Result.findOne({
-        userId,
-        testId
-      });
+      if (test.allowMultipleAttempts === false) {
+  const previousResult = await Result.findOne({
+    userId,
+    testId
+  });
 
-      if (previousResult) {
-        return res.status(409).json({
-          message: "You have already attempted this scheduled test"
-        });
-      }
+  if (previousResult) {
+    return res.status(409).json({
+      message: "You have already attempted this test"
+    });
+  }
+}
     }
 
     const questions = await Question.find({ testId });

@@ -22,6 +22,10 @@ const testSchema = new mongoose.Schema({
   // Optional scheduled test window
   startTime: { type: Date, default: null },
   endTime:   { type: Date, default: null },
+    allowMultipleAttempts: {
+    type: Boolean,
+    default: true
+  },
 
   // Creator info
   createdBy:   String,           // legacy string ID

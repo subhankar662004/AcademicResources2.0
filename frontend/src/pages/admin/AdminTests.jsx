@@ -39,7 +39,6 @@ function AdminShareCode({ code }) {
   );
 }
 import { API_URL } from '../../config';
-import { getCategories } from '../../utils/categoryStore';
 
 const CAT_COLORS = {
   'CSE':      { bg: '#eef2ff', color: '#6366f1', border: '#c7d2fe' },
@@ -63,7 +62,28 @@ export default function AdminTests() {
   const { tests, setTests, fetchTests, toast, user } = useAdmin();
   const [categories, setCategories] = useState([]);
 
-  useEffect(() => { setCategories(getCategories()); }, []);
+  useEffect(() => {
+  fetchCategories();
+}, []);
+
+const fetchCategories = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/categories`);
+    const data = await res.json();
+
+    if (res.ok && Array.isArray(data)) {
+      setCategories(data);
+      if (data.length > 0) {
+        setCategory(data[0].name);
+      }
+    } else {
+      setCategories([]);
+    }
+  } catch (error) {
+    console.error("Failed to fetch categories:", error);
+    setCategories([]);
+  }
+};
 
   const [activeTab,      setActiveTab]      = useState('Create');
   const [search,         setSearch]         = useState('');
@@ -74,6 +94,7 @@ export default function AdminTests() {
   const [duration,       setDuration]       = useState('');
   const [startTime,      setStartTime]      = useState('');
   const [endTime,        setEndTime]        = useState('');
+  const [allowMultipleAttempts, setAllowMultipleAttempts] = useState(true);
   const [editingId,      setEditingId]      = useState('');
   const [question,       setQuestion]       = useState('');
   const [options,        setOptions]        = useState(['', '', '', '']);
@@ -168,10 +189,17 @@ export default function AdminTests() {
   }), [tests, search]);
   const pgTests = usePagination(filtered, 12);
 
-  const resetForm = () => {
-    setEditingId(''); setTitle(''); setDesc(''); setCategory(categories[0] || 'CSE');
-    setSubject(''); setDuration(''); setStartTime(''); setEndTime('');
-  };
+ const resetForm = () => {
+  setEditingId('');
+  setTitle('');
+  setDesc('');
+  setCategory(categories[0]?.name || categories[0] || 'CSE');
+  setSubject('');
+  setDuration('');
+  setStartTime('');
+  setEndTime('');
+  setAllowMultipleAttempts(true);
+};
 
  const createTest = async () => {
   if (!title.trim()) {
@@ -205,6 +233,7 @@ export default function AdminTests() {
       duration: Number(duration),
       startTime: startTime || null,
       endTime: endTime || null,
+      allowMultipleAttempts,
       createdBy: user?.id || user?._id,
     }),
   });
@@ -243,6 +272,7 @@ export default function AdminTests() {
       duration: Number(duration),
       startTime: startTime || null,
       endTime: endTime || null,
+      allowMultipleAttempts,
     }),
   });
 
@@ -260,10 +290,11 @@ export default function AdminTests() {
 
   const startEdit = (t) => {
     setEditingId(t._id); setTitle(t.title || ''); setDesc(t.description || '');
-    setCategory(t.category || categories[0] || 'CSE'); setSubject(t.subject || '');
+    setCategory(t.category || categories[0]?.name || categories[0] || 'CSE'); setSubject(t.subject || '');
     setDuration(t.duration || '');
     setStartTime(t.startTime ? t.startTime.slice(0, 16) : '');
     setEndTime(t.endTime   ? t.endTime.slice(0, 16)   : '');
+    setAllowMultipleAttempts(t.allowMultipleAttempts !== false);
     setActiveTab('Create');
   };
 
@@ -466,21 +497,23 @@ export default function AdminTests() {
             <div className="at2-field at2-span2">
               <label className="at2-label">Category</label>
               <div className="at2-cat-picker">
-                {categories.map(c => {
-                  const meta = CAT_COLORS[c] || CAT_FALLBACK;
-                  const active = category === c;
-                  return (
-                    <button
-                      key={c}
-                      className={`at2-cat-pill ${active ? 'at2-cat-pill-active' : ''}`}
-                      style={active ? { background: meta.bg, color: meta.color, borderColor: meta.border } : {}}
-                      onClick={() => setCategory(c)}
-                      type="button"
-                    >
-                      {c}
-                    </button>
-                  );
-                })}
+                {categories.map(cat => {
+  const name = cat.name || cat;
+  const meta = CAT_COLORS[name] || CAT_FALLBACK;
+  const active = category === name;
+
+  return (
+    <button
+      key={cat._id || name}
+      className={`at2-cat-pill ${active ? 'at2-cat-pill-active' : ''}`}
+      style={active ? { background: meta.bg, color: meta.color, borderColor: meta.border } : {}}
+      onClick={() => setCategory(name)}
+      type="button"
+    >
+      {name}
+    </button>
+  );
+})}
               </div>
             </div>
 
@@ -500,6 +533,33 @@ export default function AdminTests() {
               <label className="at2-label">End Time <span className="at2-optional">optional</span></label>
               <input className="at2-input" type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} />
             </div>
+            <div className="at2-field at2-span2">
+  <label className="at2-label">Attempt Permission</label>
+
+  <div className="at2-cat-picker">
+    <button
+      type="button"
+      className={`at2-cat-pill ${allowMultipleAttempts ? 'at2-cat-pill-active' : ''}`}
+      onClick={() => setAllowMultipleAttempts(true)}
+    >
+      Multiple Attempts
+    </button>
+
+    <button
+      type="button"
+      className={`at2-cat-pill ${!allowMultipleAttempts ? 'at2-cat-pill-active' : ''}`}
+      onClick={() => setAllowMultipleAttempts(false)}
+    >
+      Only One Attempt
+    </button>
+  </div>
+
+  <p style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
+    Default: Multiple attempts allowed. Choose “Only One Attempt” if each student can submit only once.
+  </p>
+</div>
+
+
           </div>
 
           <div className="at2-form-actions">
@@ -984,6 +1044,9 @@ export default function AdminTests() {
                       <span className="at2-meta-chip"><Clock size={11} /> {t.duration} mins</span>
                       <span className="at2-meta-chip"><BookOpen size={11} /> {qCount} Q{qCount !== 1 ? 's' : ''}</span>
                       {t.subject && <span className="at2-meta-chip"><Tag size={11} /> {t.subject}</span>}
+                      <span className="at2-meta-chip">
+  {t.allowMultipleAttempts === false ? 'One Attempt' : 'Multiple Attempts'}
+</span>
                     </div>
                     {t.shareCode && <AdminShareCode code={t.shareCode} />}
                     <div className="at2-test-footer">

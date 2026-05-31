@@ -11,7 +11,17 @@ const router = express.Router();
 // Create new test — admin only
 router.post("/create", verifyAdmin, async (req, res) => {
   try {
-    const { title, description, category, subject, duration, startTime, endTime, createdBy } = req.body;
+    const {
+  title,
+  description,
+  category,
+  subject,
+  duration,
+  startTime,
+  endTime,
+  allowMultipleAttempts,
+  createdBy
+} = req.body;
     if (!title || !duration) return res.status(400).json({ message: "title and duration are required" });
     const test = new Test({
       title, description,
@@ -20,6 +30,7 @@ router.post("/create", verifyAdmin, async (req, res) => {
       duration,
       startTime: startTime || null,
       endTime: endTime || null,
+      allowMultipleAttempts: allowMultipleAttempts !== undefined ? allowMultipleAttempts : true,
       createdBy: createdBy || req.userId,
     });
     await test.save();
@@ -44,10 +55,28 @@ router.get("/", async (req, res) => {
 // Update test — admin only
 router.put("/:id", verifyAdmin, async (req, res) => {
   try {
-    const { title, description, category, subject, duration, startTime, endTime } = req.body;
+    const {
+  title,
+  description,
+  category,
+  subject,
+  duration,
+  startTime,
+  endTime,
+  allowMultipleAttempts
+} = req.body;
     const test = await Test.findByIdAndUpdate(
       req.params.id,
-      { title, description, category, subject, duration, startTime: startTime || null, endTime: endTime || null },
+      {
+  title,
+  description,
+  category,
+  subject,
+  duration,
+  startTime: startTime || null,
+  endTime: endTime || null,
+  allowMultipleAttempts: allowMultipleAttempts !== undefined ? allowMultipleAttempts : true
+},
       { new: true }
     );
     if (!test) return res.status(404).json({ message: "Test not found" });
