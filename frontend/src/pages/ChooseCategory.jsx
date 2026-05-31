@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Monitor, Shield, Flag, Train, ShieldCheck, Heart, Plus, ArrowRight, Sparkles, GraduationCap } from 'lucide-react';
-import { getCategories } from '../utils/categoryStore';
+import { API_URL } from '../config';
 
 const DEFAULT_ICON_MAP = {
   'CSE':      { Icon: Monitor,     gradient: 'linear-gradient(135deg,#dbeafe,#bfdbfe)', iconColor: '#2563eb', border: '#93c5fd' },
@@ -26,9 +26,40 @@ function ChooseCategory() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
 
-  useEffect(() => {
-    setCategories(getCategories());
-  }, []);
+ useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/categories`);
+      const data = await res.json();
+
+      if (res.ok && Array.isArray(data)) {
+        setCategories(data);
+      } else {
+        setCategories([
+          { name: 'CSE', title: 'Computer Science & Engineering' },
+          { name: 'SSC GD', title: 'SSC GD Exam' },
+          { name: 'Agniveer', title: 'Agniveer' },
+          { name: 'Railway', title: 'Railway Exams' },
+          { name: 'WBP', title: 'West Bengal Police' },
+          { name: 'Nursing', title: 'Nursing' },
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+
+      setCategories([
+        { name: 'CSE', title: 'Computer Science & Engineering' },
+        { name: 'SSC GD', title: 'SSC GD Exam' },
+        { name: 'Agniveer', title: 'Agniveer' },
+        { name: 'Railway', title: 'Railway Exams' },
+        { name: 'WBP', title: 'West Bengal Police' },
+        { name: 'Nursing', title: 'Nursing' },
+      ]);
+    }
+  };
+
+  fetchCategories();
+}, []);
 
   const handleSelect = (name) => {
     localStorage.setItem('selectedCategory', name);
@@ -46,10 +77,11 @@ function ChooseCategory() {
       </div>
 
       <div className="cc2-grid">
-        {categories.map((name) => {
-          const meta = DEFAULT_ICON_MAP[name] || FALLBACK;
-          const { Icon } = meta;
-          const fullName = FULL_NAMES[name] || name;
+        {categories.map((cat) => {
+  const name = cat.name || cat;
+  const fullName = cat.title || FULL_NAMES[name] || name;
+  const meta = DEFAULT_ICON_MAP[name] || FALLBACK;
+  const { Icon } = meta;
 
           return (
             <button

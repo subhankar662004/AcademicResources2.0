@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAdmin } from './AdminContext';
 import { EditFolderModal } from '../AdminModals';
 import { Search, Folder, Plus, Pencil, Trash2, Tag, X, Check } from 'lucide-react';
-import { getCategories, addCategory, removeCategory } from '../../utils/categoryStore';
+import { API_URL } from '../../config';
 
 export default function AdminFolders() {
   const { folders, handleFolderSave, handleDeleteFolder } = useAdmin();
@@ -15,20 +15,86 @@ export default function AdminFolders() {
   const [newCatInput,  setNewCatInput]  = useState('');
   const [addingCat,    setAddingCat]    = useState(false);
 
-  useEffect(() => { setCategories(getCategories()); }, []);
+  useEffect(() => {
+  fetchCategories();
+}, []);
 
-  const handleAddCategory = () => {
-    if (!newCatInput.trim()) return;
-    const updated = addCategory(newCatInput.trim());
-    setCategories(updated);
+const fetchCategories = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/categories`);
+    const data = await res.json();
+
+    if (res.ok && Array.isArray(data)) {
+      setCategories(data);
+    } else {
+      setCategories([]);
+    }
+  } catch (error) {
+    console.error('Failed to fetch categories:', error);
+    setCategories([]);
+  }
+};
+
+ const handleAddCategory = async () => {
+  if (!newCatInput.trim()) return;
+
+  try {
+    const token = localStorage.getItem('token');
+
+    const res = await fetch(`${API_URL}/api/categories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: newCatInput.trim(),
+        title: newCatInput.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || 'Failed to add category');
+      return;
+    }
+
+    setCategories(prev => [...prev, data]);
     setNewCatInput('');
     setAddingCat(false);
-  };
+  } catch (error) {
+    console.error('Add category error:', error);
+    alert('Connection error while adding category');
+  }
+};
 
-  const handleRemoveCategory = (name) => {
-    const updated = removeCategory(name);
-    setCategories(updated);
-  };
+  const handleRemoveCategory = async (cat) => {
+  if (!window.confirm(`Delete category "${cat.name}"?`)) return;
+
+  try {
+    const token = localStorage.getItem('token');
+
+    const res = await fetch(`${API_URL}/api/categories/${cat._id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || 'Failed to delete category');
+      return;
+    }
+
+    setCategories(prev => prev.filter(c => c._id !== cat._id));
+  } catch (error) {
+    console.error('Delete category error:', error);
+    alert('Connection error while deleting category');
+  }
+};
 
   const filtered = useMemo(() => folders.filter(f => {
     const byVis = visibility === 'all' || (visibility === 'public' ? f.isPublic : !f.isPublic);
@@ -75,13 +141,17 @@ export default function AdminFolders() {
 
         <div className="af-cat-chips">
           {categories.map(cat => (
-            <div key={cat} className="af-cat-chip">
-              <span>{cat}</span>
-              <button className="af-cat-chip-del" onClick={() => handleRemoveCategory(cat)} title={`Remove ${cat}`}>
-                <X size={10} />
-              </button>
-            </div>
-          ))}
+  <div key={cat._id || cat.name} className="af-cat-chip">
+    <span>{cat.name}</span>
+    <button
+      className="af-cat-chip-del"
+      onClick={() => handleRemoveCategory(cat)}
+      title={`Remove ${cat.name}`}
+    >
+      <X size={10} />
+    </button>
+  </div>
+))}
         </div>
         <p className="af-cat-hint">These categories appear on the Choose Category page and in all folder/resource forms.</p>
       </div>
