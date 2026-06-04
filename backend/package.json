@@ -23,6 +23,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.4",
+    "pdfkit": "^0.18.0",
     "web-push": "^3.6.7"
   }
 }

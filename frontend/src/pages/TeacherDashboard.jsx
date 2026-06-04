@@ -416,6 +416,48 @@ export default function TeacherDashboard() {
     setDetailLoading(false);
   };
 
+  const downloadTestPdf = async (testId, title = "test") => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    toast.error("Authentication required. Please login again.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/test-pdf/${testId}/download`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+   if (!res.ok) {
+  const data = await res.json().catch(() => ({}));
+
+  console.log("PDF ERROR STATUS:", res.status);
+  console.log("PDF ERROR DATA:", data);
+
+  toast.error(data.error || data.message || "Failed to download PDF");
+  return;
+}
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/[^a-z0-9]/gi, "_")}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+    toast.success("PDF downloaded!");
+  } catch (error) {
+    toast.error("Connection error while downloading PDF");
+  }
+};
+
   /* ── Export CSV ── */
   const exportCsv = () => {
     if (!results.length) return;
@@ -674,6 +716,12 @@ setAllowMultipleAttempts(true);
                     <button className="btn btn-outline btn-sm" onClick={() => loadResults(t._id)}>
                       <BarChart2 size={13}/> Results
                     </button>
+                    <button
+  className="btn btn-outline btn-sm"
+  onClick={() => downloadTestPdf(t._id, t.title)}
+>
+  <Download size={13}/> PDF
+</button>
                     <a className="btn btn-primary btn-sm" href={`/#/take-test/${t.shareCode}`} target="_blank" rel="noreferrer">
                       <Eye size={13}/> Preview
                     </a>

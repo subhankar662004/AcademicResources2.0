@@ -318,6 +318,44 @@ const fetchCategories = async () => {
     }
   };
 
+  const downloadTestPdf = async (testId, title = "test") => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    toast.error("Authentication required. Please login again.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/test-pdf/${testId}/download`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.message || "Failed to download PDF");
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/[^a-z0-9]/gi, "_")}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+    toast.success("PDF downloaded!");
+  } catch (error) {
+    toast.error("Connection error while downloading PDF");
+  }
+};
+
   const fetchResults = async (testId) => {
   setResultTestId(testId);
   setTestResults([]);
@@ -995,6 +1033,13 @@ const fetchCategories = async () => {
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>
                             <button className="at2-icon-btn" onClick={() => setQuestionsModal(t)} title="View Questions"><Eye size={13} /></button>
+                            <button
+                         className="at2-icon-btn"
+  onClick={() => downloadTestPdf(t._id, t.title)}
+  title="Download PDF"
+>
+  <FileText size={13} />
+</button>
                             <button className="at2-icon-btn at2-icon-danger" onClick={() => setConfirmDlg({ id: t._id, onConfirm: () => {
                               fetch(`${API_URL}/api/admin/tests/${t._id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
                                 .then(() => setTeacherTests(prev => prev.filter(x => x._id !== t._id)));
@@ -1034,10 +1079,38 @@ const fetchCategories = async () => {
                     <div className="at2-test-card-top">
                       <span className="at2-cat-badge" style={{ background: cat.bg, color: cat.color, border: `1px solid ${cat.border}` }}>{t.category}</span>
                       <div className="at2-test-actions">
-                        <button className="at2-icon-btn" onClick={() => setQuestionsModal(t)} title="View Questions"><Eye size={13} /></button>
-                        <button className="at2-icon-btn" onClick={() => startEdit(t)} title="Edit"><Pencil size={13} /></button>
-                        <button className="at2-icon-btn at2-icon-danger" onClick={() => deleteTest(t._id)} title="Delete"><Trash2 size={13} /></button>
-                      </div>
+  <button
+    className="at2-icon-btn"
+    onClick={() => setQuestionsModal(t)}
+    title="View Questions"
+  >
+    <Eye size={13} />
+  </button>
+
+  <button
+    className="at2-icon-btn"
+    onClick={() => downloadTestPdf(t._id, t.title)}
+    title="Download PDF"
+  >
+    <FileText size={13} />
+  </button>
+
+  <button
+    className="at2-icon-btn"
+    onClick={() => startEdit(t)}
+    title="Edit"
+  >
+    <Pencil size={13} />
+  </button>
+
+  <button
+    className="at2-icon-btn at2-icon-danger"
+    onClick={() => deleteTest(t._id)}
+    title="Delete"
+  >
+    <Trash2 size={13} />
+  </button>
+</div>
                     </div>
                     <h3 className="at2-test-title">{t.title}</h3>
                     {t.description && <p className="at2-test-desc">{t.description}</p>}

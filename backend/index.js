@@ -25,6 +25,7 @@ import teacherRoutes from "./routes/teacherRoutes.js";
 import adminBroadcastRoutes from "./routes/adminBroadcast.js";
 import PushSubscription from './models/PushSubscription.js';
 import categoryRoutes from "./routes/categories.js";
+import testPdfRoutes from "./routes/testPdfRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -93,6 +94,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/admin/tests', adminTestRoutes);
 app.use('/api/testSubmission', testSubmissionRoutes);
+app.use("/api/test-pdf", testPdfRoutes);
 app.use("/api/ai-tests", aiTestRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/admin/broadcast", adminBroadcastRoutes);
