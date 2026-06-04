@@ -78,6 +78,11 @@ export default function Test() {
   const [timeLeft,       setTimeLeft]       = useState(0);
   const [timeTaken,      setTimeTaken]      = useState(0);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [restrictedMode, setRestrictedMode] = useState(false);
+  const [violations, setViolations] = useState([]);
+  const restrictedRef = useRef(false);
+  const violationsRef = useRef([]);
+  const submittedRef = useRef(false);
   const [result,         setResult]         = useState(null);
   const [submitted,      setSubmitted]      = useState(false);
   const [loading,        setLoading]        = useState(true);
@@ -91,15 +96,21 @@ export default function Test() {
   const { user }       = useAuth();
   const navigate       = useNavigate();
   const selectedCategory = localStorage.getItem('selectedCategory');
-  const isRestrictedTest = currentTest?.allowMultipleAttempts === false;
+  const isRestrictedTest = restrictedMode;
   const pgTests   = usePagination(tests, 9);
   const pgAiTests = usePagination(aiTests, 9);
 
   /* ── Lock body scroll when submit modal is open ── */
+
+  
   useEffect(() => {
     document.body.style.overflow = showSubmitModal ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [showSubmitModal]);
+
+  useEffect(() => {
+  submittedRef.current = submitted;
+}, [submitted]);
 
   useEffect(() => {
     try { const s = localStorage.getItem('testAnswers'); if (s) setAnswers(JSON.parse(s)); } catch {}
@@ -138,16 +149,26 @@ useEffect(() => {
   if (!selectedTest || result || submitted) return;
 
   // Restriction only for Only One Attempt tests
-  if (!isRestrictedTest) return;
+  if (!restrictedMode) return;
 
   let lastViolationTime = 0;
 
   const violate = (reason) => {
+    if (submittedRef.current) return;
+
     const now = Date.now();
 
     // duplicate event prevent
     if (now - lastViolationTime < 1500) return;
     lastViolationTime = now;
+
+    const violation = {
+      reason,
+      at: new Date().toISOString()
+    };
+
+    violationsRef.current = [...violationsRef.current, violation];
+    setViolations(violationsRef.current);
 
     setTabSwitchCount(prev => {
       const next = prev + 1;
@@ -231,7 +252,7 @@ useEffect(() => {
     document.removeEventListener('cut', onCut);
     document.removeEventListener('keydown', onKeyDown);
   };
-}, [selectedTest, result, submitted, isRestrictedTest]);
+}, [selectedTest, result, submitted, restrictedMode]);
 
   useEffect(() => { localStorage.setItem('testAnswers', JSON.stringify(answers)); }, [answers]);
 
@@ -246,7 +267,18 @@ useEffect(() => {
     if (test.endTime   && now > new Date(test.endTime))   return setWarning('This test has already ended.');
     if (!test.duration || Number(test.duration) <= 0)     return setWarning('Test duration is missing. Contact admin.');
 
-    if (test.allowMultipleAttempts === false) {
+    const oneAttempt = test.allowMultipleAttempts === false;
+    console.log("SELECTED TEST:", test);
+console.log("allowMultipleAttempts:", test.allowMultipleAttempts);
+console.log("oneAttempt:", oneAttempt);
+
+setRestrictedMode(oneAttempt);
+restrictedRef.current = oneAttempt;
+setTabSwitchCount(0);
+setViolations([]);
+violationsRef.current = [];
+
+if (oneAttempt) {
   try {
     await document.documentElement.requestFullscreen();
   } catch {
@@ -271,11 +303,20 @@ useEffect(() => {
         startTimeRef.current = Date.now();
         setResult(null);
 setSubmitted(false);
+submittedRef.current = false;
+
 setAnswers({});
 setWarning('');
 setActiveQ(0);
+
 setTabSwitchCount(0);
-        localStorage.removeItem('testAnswers');
+setViolations([]);
+violationsRef.current = [];
+
+setRestrictedMode(oneAttempt);
+restrictedRef.current = oneAttempt;
+
+localStorage.removeItem('testAnswers');
       })
       .catch(() => setWarning('Failed to load questions. Please try again.'))
       .finally(() => setLoadingTest(null));
@@ -287,9 +328,11 @@ setTabSwitchCount(0);
   };
 
   const handleSubmit = async () => {
-    if (submitted) return;
-    setShowSubmitModal(false);
-    setSubmitted(true);
+    if (submittedRef.current || submitted) return;
+
+submittedRef.current = true;
+setShowSubmitModal(false);
+setSubmitted(true);
     const elapsed = startTimeRef.current ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0;
     setTimeTaken(elapsed);
     try {
@@ -301,14 +344,26 @@ const res = await fetch(`${API_URL}/api/testSubmission/submit/${selectedTest}`, 
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
   },
-  body: JSON.stringify({ answers }),
+  body: JSON.stringify({
+  answers,
+  violations: violationsRef.current,
+}),
 });
       const data = await res.json();
-      if (!res.ok) { setWarning(data.message || 'Submission failed.'); setSubmitted(false); return; }
+     if (!res.ok) {
+  setWarning(data.message || 'Submission failed.');
+  submittedRef.current = false;
+  setSubmitted(false);
+  return;
+}
       localStorage.removeItem('testAnswers');
       setResult(data);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch { setWarning('Connection error. Please retry.'); setSubmitted(false); }
+   } catch {
+  setWarning('Connection error. Please retry.');
+  submittedRef.current = false;
+  setSubmitted(false);
+}
   };
 
   const handleDeleteAI = async (id) => {
@@ -336,8 +391,17 @@ const res = await fetch(`${API_URL}/api/testSubmission/submit/${selectedTest}`, 
   setWarning('');
   setActiveQ(0);
   setTabSwitchCount(0);
-  setShowSubmitModal(false);
-  localStorage.removeItem('testAnswers');
+
+setRestrictedMode(false);
+restrictedRef.current = false;
+
+setViolations([]);
+violationsRef.current = [];
+
+submittedRef.current = false;
+
+setShowSubmitModal(false);
+localStorage.removeItem('testAnswers');
 };
 
   const answered   = Object.keys(answers).length;
@@ -546,7 +610,7 @@ const teacherTests = tests.filter(t => t.teacherId);
 
           <div className="test-topbar-right">
             {tabSwitchCount > 0 && (
-              <div className="topbar-switch-warn"><Shield size={13}/> {tabSwitchCount}/3</div>
+              <div className="topbar-switch-warn"><Shield size={13}/> {tabSwitchCount}/2</div>
             )}
             <div className="topbar-timer">
               <Timer size={15} style={{ color: timeColor, flexShrink:0 }}/>

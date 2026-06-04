@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/submit/:testId", verifyToken, async (req, res) => {
   try {
     const { testId } = req.params;
-    const { answers } = req.body;
+    const { answers, violations } = req.body;
     const userId = req.userId;
 
     const test = await Test.findById(testId);
@@ -61,13 +61,19 @@ router.post("/submit/:testId", verifyToken, async (req, res) => {
       }
     });
 
-    const result = new Result({
-      userId,
-      testId,
-      score,
-      total: questions.length,
-      answers
-    });
+   const result = new Result({
+  userId,
+  testId,
+  score,
+  total: questions.length,
+  answers,
+  violations: Array.isArray(violations)
+    ? violations.map(v => ({
+        reason: v.reason || '',
+        at: v.at ? new Date(v.at) : new Date()
+      }))
+    : []
+});
 
     await result.save();
 
@@ -99,7 +105,7 @@ router.get("/my-results/:userId", verifyToken, async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
     const results = await Result.find({ userId: req.params.userId })
-      .populate("testId", "title category subject startTime endTime duration")
+      .populate("testId", "title category subject startTime endTime duration allowMultipleAttempts")
       .sort({ submittedAt: -1 });
 
     res.json(results);
@@ -116,7 +122,7 @@ router.get("/results/:testId", verifyAdmin, async (req, res) => {
   try {
     const results = await Result.find({ testId: req.params.testId })
       .populate("userId", "name email")
-      .populate("testId", "title category subject duration startTime endTime")
+      .populate("testId", "title category subject duration startTime endTime allowMultipleAttempts")
       .sort({ submittedAt: -1 });
 
     res.json(results);
