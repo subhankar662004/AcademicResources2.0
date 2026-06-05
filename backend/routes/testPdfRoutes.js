@@ -12,10 +12,8 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const regularFont = path.join(__dirname, "../fonts/NotoSansBengali-Regular.ttf");
-const boldFont = path.join(__dirname, "../fonts/NotoSansBengali-Bold.ttf");
-const englishFont = path.join(__dirname, "../fonts/NotoSans-Regular.ttf");
-const englishBoldFont = path.join(__dirname, "../fonts/NotoSans-Bold.ttf");
+const regularFont = path.join(__dirname, "../fonts/HindSiliguri-Regular.ttf");
+const boldFont = path.join(__dirname, "../fonts/HindSiliguri-Bold.ttf");
 const cleanText = (value) => {
   return String(value ?? "")
     .normalize("NFC")
@@ -83,19 +81,6 @@ router.get("/:testId/download", verifyToken, async (req, res) => {
     }
 
 
-    if (!fs.existsSync(englishFont)) {
-  return res.status(500).json({
-    message: "English font missing",
-    path: englishFont
-  });
-}
-
-if (!fs.existsSync(englishBoldFont)) {
-  return res.status(500).json({
-    message: "English bold font missing",
-    path: englishBoldFont
-  });
-}
     const questions = await Question.find({ testId: test._id });
 
     const safeTitle = cleanText(test.title || "test")
@@ -134,94 +119,30 @@ if (!fs.existsSync(englishBoldFont)) {
       res.send(pdfBuffer);
     });
 
-    doc.registerFont("NotoBengali", regularFont);
-doc.registerFont("NotoBengaliBold", boldFont);
-doc.registerFont("NotoEnglish", englishFont);
-doc.registerFont("NotoEnglishBold", englishBoldFont);
+   doc.registerFont("BanglaFont", regularFont);
+doc.registerFont("BanglaFontBold", boldFont);
 
-   const isBanglaChar = (ch) => {
-  const code = ch.charCodeAt(0);
-
-  return (
-    (code >= 0x0980 && code <= 0x09FF) || // Bengali letters
-    code === 0x0964 || // Bengali dari ।
-    code === 0x0965    // double dari ॥
-  );
-};
-
-const isEnglishChar = (ch) => /[a-zA-Z0-9০-৯]/.test(ch);
-
-const isNeutralChar = (ch) => /[\s.,!?;:()\-–—/+=%&'"।]/.test(ch);
-
-const writeText = (text, options = {}) => {
+ const writeText = (text, options = {}) => {
   const value = cleanText(text);
   if (!value) return;
 
-  const useBold =
-    doc._font?.name === "NotoBengaliBold" ||
-    doc._font?.name === "NotoEnglishBold";
-
-  let currentType = null;
-  let buffer = "";
-
-  const flush = (continued = true) => {
-    if (!buffer) return;
-
-    doc.font(
-      currentType === "bn"
-        ? useBold
-          ? "NotoBengaliBold"
-          : "NotoBengali"
-        : useBold
-          ? "NotoEnglishBold"
-          : "NotoEnglish"
-    );
-
-    doc.text(buffer, {
-      ...options,
-      continued,
-      features: currentType === "bn" ? [] : undefined,
-    });
-
-    buffer = "";
-  };
-
-  for (let i = 0; i < value.length; i++) {
-    const ch = value[i];
-
-    let type;
-
-    if (isBanglaChar(ch)) {
-      type = "bn";
-    } else if (isEnglishChar(ch)) {
-      type = "en";
-    } else if (isNeutralChar(ch)) {
-      type = currentType || "bn";
-    } else {
-      continue;
-    }
-
-    if (currentType && type !== currentType) {
-      flush(true);
-    }
-
-    currentType = type;
-    buffer += ch;
-  }
-
-  flush(false);
+  doc.text(value, {
+    ...options,
+    features: [],
+  });
 };
-    const writeLine = (text, options = {}) => {
-      writeText(text, options);
-    };
+
+const writeLine = (text, options = {}) => {
+  writeText(text, options);
+};
 
     // Header
-   doc.font("NotoEnglishBold").fontSize(20);
-doc.text("Academic Resources Hub", { align: "center" });
+   doc.font("BanglaFontBold").fontSize(20);
+writeLine("Academic Resources Hub", { align: "center" });
 
     doc.moveDown(0.5);
 
-doc.font("NotoBengaliBold").fontSize(16);
+doc.font("BanglaFontBold").fontSize(16);
 writeText(cleanText(test.title) || "Untitled Test", { align: "center" });
 
     doc.moveDown();
@@ -235,7 +156,7 @@ writeText(cleanText(test.title) || "Untitled Test", { align: "center" });
     (q.options || []).some(o => hasBengali(o))
   );
 
-doc.font("NotoBengali").fontSize(10);
+doc.font("BanglaFont").fontSize(10);
 
 if (bengaliMode) {
   writeLine(`বিভাগ: ${cleanText(test.category) || "সাধারণ"}`);
@@ -264,7 +185,7 @@ if (bengaliMode) {
       const questionText =
         cleanText(q.question || q.title) || "Question not available";
 
-     doc.font("NotoBengaliBold").fontSize(12);
+     doc.font("BanglaFontBold").fontSize(12);
 
 if (bengaliMode) {
   writeLine(`প্রশ্ন ${toBanglaNumber(index + 1)}. ${questionText}`);
@@ -275,7 +196,7 @@ if (bengaliMode) {
 
       doc.moveDown(0.4);
 
-      doc.font("NotoBengali").fontSize(11);
+      doc.font("BanglaFont").fontSize(11);
 
 (q.options || []).forEach((opt, i) => {
   if (bengaliMode) {
@@ -290,7 +211,7 @@ if (bengaliMode) {
 
       doc.moveDown(0.4);
 
-      doc.font("NotoBengaliBold").fontSize(10).fillColor("#059669");
+      doc.font("BanglaFontBold").fontSize(10).fillColor("#059669");
 
 if (bengaliMode) {
   writeLine(`উত্তর: ${cleanText(q.answer) || "প্রযোজ্য নয়"}`, { indent: 18 });
@@ -304,10 +225,8 @@ if (bengaliMode) {
     });
 
     // Footer
-   doc.font("NotoEnglish").fontSize(9).fillColor("gray");
-doc.text("Generated by Academic Resources Hub", {
-  align: "center",
-});
+   doc.font("BanglaFont").fontSize(9).fillColor("gray");
+writeLine("Generated by Academic Resources Hub", { align: "center" });
 
     doc.end();
   } catch (error) {
