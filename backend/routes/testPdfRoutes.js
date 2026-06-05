@@ -17,6 +17,17 @@ const boldFont = path.join(__dirname, "../fonts/HindSiliguri-Bold.ttf");
 const cleanText = (value) => {
   return String(value ?? "")
     .normalize("NFC")
+.replace(/₀/g, "0")
+.replace(/₁/g, "1")
+.replace(/₂/g, "2")
+.replace(/₃/g, "3")
+.replace(/₄/g, "4")
+.replace(/₅/g, "5")
+.replace(/₆/g, "6")
+.replace(/₇/g, "7")
+.replace(/₈/g, "8")
+.replace(/₉/g, "9")
+
     .replace(/²/g, "^2")
 .replace(/³/g, "^3")
 .replace(/¹/g, "^1")
@@ -148,9 +159,9 @@ const addWatermarkToCurrentPage = () => {
 
   doc
     .font("BanglaFontBold")
-    .fontSize(30)
-    .fillColor("#64748b")
-    .opacity(0.08)
+    .fontSize(34)
+.fillColor("#334155")
+.opacity(0.13)
     .rotate(-35, {
       origin: [doc.page.width / 2, doc.page.height / 2],
     })
