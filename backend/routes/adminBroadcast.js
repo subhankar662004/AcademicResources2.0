@@ -32,10 +32,10 @@ router.post('/', verifyAdmin, async (req, res) => {
 
     const results = { email: { sent: 0, failed: 0 }, push: { sent: 0, failed: 0 } };
 
-    const emailSubject = subject?.trim() || 'Message from Academic Resources Hub';
+    const emailSubject = subject?.trim() || 'Message from Learnixa';
     const htmlBody = `
       <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px;">
-        <h2 style="color:#2563eb;margin-bottom:4px;">Academic Resources Hub</h2>
+        <h2 style="color:#2563eb;margin-bottom:4px;">Learnixa</h2>
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
         <div style="font-size:15px;line-height:1.7;color:#374151;white-space:pre-wrap;">${message.trim()}</div>
         <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
@@ -49,7 +49,7 @@ router.post('/', verifyAdmin, async (req, res) => {
           await axios.post(
             'https://api.brevo.com/v3/smtp/email',
             {
-              sender: { name: 'Academic Resources Hub', email: EMAIL_FROM },
+              sender: { name: 'Learnixa', email: EMAIL_FROM },
               to: [{ email: u.email, name: u.name }],
               subject: emailSubject,
               htmlContent: htmlBody,
@@ -69,7 +69,7 @@ router.post('/', verifyAdmin, async (req, res) => {
     /* ── Web Push ── */
     if (channels.includes('push')) {
       const payload = JSON.stringify({
-        title: 'Academic Resources Hub',
+        title: 'Learnixa',
         body: message.trim().slice(0, 200),
         url: '/',
         timestamp: Date.now(),

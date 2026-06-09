@@ -47,6 +47,10 @@ const testSchema = new mongoose.Schema({
     enum: ['none', 'pending', 'approved', 'rejected'],
     default: 'none',
   },
+  approvedAt: {
+  type: Date,
+  default: null
+},
   publishNote: { type: String, default: '' }, // admin's rejection reason
 }, {
   timestamps: true
@@ -54,6 +58,7 @@ const testSchema = new mongoose.Schema({
 
 testSchema.index({ category: 1, createdAt: -1 });
 testSchema.index({ startTime: 1, endTime: 1 });
+testSchema.index({ publishStatus: 1, category: 1, approvedAt: -1 });
 
 const Test = mongoose.model("Test", testSchema);
 

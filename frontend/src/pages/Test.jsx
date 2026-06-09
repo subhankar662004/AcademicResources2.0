@@ -118,7 +118,7 @@ export default function Test() {
 
   useEffect(() => {
     if (!selectedCategory) { navigate('/choose-category'); return; }
-    fetch(`${API_URL}/api/admin/tests?category=${encodeURIComponent(selectedCategory)}`)
+    fetch(`${API_URL}/api/admin/tests?category=${encodeURIComponent(selectedCategory)}&type=practice`)
       .then(r => r.json()).then(d => setTests(Array.isArray(d) ? d : [])).catch(() => {}).finally(() => setLoading(false));
   }, [selectedCategory, navigate]);
 

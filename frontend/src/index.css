@@ -10153,3 +10153,145 @@ body.test-active-mode .btm-bar {
     margin-bottom: 90px;
   }
 }
+
+.official-rank-card {
+  margin-top: 28px;
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.official-rank-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.official-rank-head h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.official-rank-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.official-rank-loading,
+.official-rank-empty {
+  padding: 30px 10px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.official-rank-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.official-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.official-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.official-rank-position {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: #eef2ff;
+  color: #4f46e5;
+  flex-shrink: 0;
+}
+
+.official-rank-position.rank-1 {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.official-rank-position.rank-2 {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.official-rank-position.rank-3 {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.official-rank-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.official-rank-user img,
+.official-rank-user > span {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.official-rank-user img {
+  object-fit: cover;
+}
+
+.official-rank-user > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dbeafe;
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.official-rank-user strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.official-rank-user small,
+.official-rank-score small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.official-rank-score {
+  text-align: right;
+}
+
+.official-rank-score strong {
+  font-size: 18px;
+  color: #059669;
+}

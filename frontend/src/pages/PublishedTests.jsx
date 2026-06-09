@@ -28,7 +28,13 @@ export default function PublishedTests() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/tests/published`);
+        const selectedCategory = localStorage.getItem('selectedCategory');
+
+const url = selectedCategory
+  ? `${API_URL}/api/tests/published?category=${encodeURIComponent(selectedCategory)}`
+  : `${API_URL}/api/tests/published`;
+
+const res = await fetch(url);
         if (res.ok) setTests(await res.json());
       } catch { /* silent */ }
       finally { setLoading(false); }
@@ -130,7 +136,7 @@ export default function PublishedTests() {
                   <User size={12}/>
                   <span>By <strong style={{ color: 'var(--text)' }}>{t.teacherName || 'Teacher'}</strong></span>
                   <BadgeCheck size={12} color="#059669" style={{ marginLeft: 2 }} title="Verified Teacher"/>
-                  <span style={{ marginLeft: 'auto' }}>{fmt(t.createdAt)}</span>
+                  <span style={{ marginLeft: 'auto' }}>{fmt(t.approvedAt || t.createdAt)}</span>
                 </div>
 
                 {/* CTA */}

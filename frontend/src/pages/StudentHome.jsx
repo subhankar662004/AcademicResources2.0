@@ -8,7 +8,7 @@ import {
   CheckCircle, Clock, ArrowRight, Star, Zap, BarChart2,
   Award, Play, ChevronRight, Loader2, Flame, Search,
   FileText, Users, CalendarDays, UserCheck, PieChart,
-  CheckCircle2, XCircle, TimerReset,
+  CheckCircle2, XCircle, TimerReset, Medal,
 } from 'lucide-react';
 
 const TIPS = [
@@ -101,6 +101,8 @@ export default function StudentHome() {
   const [code,      setCode]      = useState('');
   const [codeErr,   setCodeErr]   = useState('');
   const [myUploads, setMyUploads] = useState([]);
+  const [ranking, setRanking] = useState([]);
+const [rankLoading, setRankLoading] = useState(true);
 
   const selectedCategory = localStorage.getItem('selectedCategory');
 
@@ -122,6 +124,35 @@ export default function StudentHome() {
       .then(data => setMyUploads(Array.isArray(data) ? data.slice(0, 4) : []))
       .catch(() => {});
   }, [user?.id]);
+
+  useEffect(() => {
+  if (!selectedCategory) {
+    setRankLoading(false);
+    return;
+  }
+
+  const loadRanking = async () => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/tests/official-ranking?category=${encodeURIComponent(selectedCategory)}`
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setRanking(Array.isArray(data.ranking) ? data.ranking : []);
+      } else {
+        setRanking([]);
+      }
+    } catch {
+      setRanking([]);
+    } finally {
+      setRankLoading(false);
+    }
+  };
+
+  loadRanking();
+}, [selectedCategory]);
 
   // Redirect first-time students to pick a category (after all hooks)
   if (!selectedCategory) {
@@ -270,6 +301,70 @@ export default function StudentHome() {
             {codeErr && <span style={{ fontSize: 12, color: '#ef4444' }}>{codeErr}</span>}
           </div>
         </form>
+      </motion.div>
+
+            {/* ── Official Ranking ── */}
+      <motion.div
+        className="official-rank-card"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.44 }}
+      >
+        <div className="official-rank-head">
+          <div>
+            <h2>
+              <Trophy size={18} color="#d97706" />
+              {selectedCategory} Official Ranking
+            </h2>
+            <p>Ranking is based only on official test results.</p>
+          </div>
+
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={() => navigate('/official-tests')}
+          >
+            Official Tests <ArrowRight size={14} />
+          </button>
+        </div>
+
+        {rankLoading ? (
+          <div className="official-rank-loading">
+            <Loader2 size={22} className="spin" />
+            Loading ranking…
+          </div>
+        ) : ranking.length === 0 ? (
+          <div className="official-rank-empty">
+            No official ranking yet. Attempt official tests to appear here.
+          </div>
+        ) : (
+          <div className="official-rank-list">
+            {ranking.slice(0, 10).map((r) => (
+              <div key={r.userId} className="official-rank-row">
+                <div className={`official-rank-position rank-${r.rank}`}>
+                  {r.rank <= 3 ? <Medal size={16} /> : r.rank}
+                </div>
+
+                <div className="official-rank-user">
+                  {r.avatar ? (
+                    <img src={r.avatar} alt={r.name} />
+                  ) : (
+                    <span>{r.name?.[0]?.toUpperCase() || 'U'}</span>
+                  )}
+
+                  <div>
+                    <strong>{r.name || 'Student'}</strong>
+                    <small>{r.attempts} official attempt{r.attempts > 1 ? 's' : ''}</small>
+                  </div>
+                </div>
+
+                <div className="official-rank-score">
+                  <strong>{r.avgPct}%</strong>
+                  <small>Best {r.bestPct}%</small>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </motion.div>
 
       {/* ── Subject performance breakdown ── */}

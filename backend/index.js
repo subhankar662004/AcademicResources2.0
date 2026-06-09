@@ -178,12 +178,117 @@ app.get('/api/admin/stats', async (req, res) => {
 app.get('/api/tests/published', async (req, res) => {
   try {
     const Test = (await import('./models/Test.js')).default;
-    const tests = await Test.find({ publishStatus: 'approved' })
-      .select('title description category subject duration teacherName teacherId shareCode createdAt')
-      .sort({ createdAt: -1 });
+
+    const { category } = req.query;
+
+    const filter = {
+      publishStatus: 'approved'
+    };
+
+    if (category && category !== "all") {
+      filter.category = category;
+    }
+
+    const tests = await Test.find(filter)
+      .select('title description category subject duration teacherName teacherId shareCode createdAt approvedAt allowMultipleAttempts publishStatus')
+      .sort({ approvedAt: -1, createdAt: -1 });
+
     res.json(tests);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Official ranking — category wise
+app.get('/api/tests/official-ranking', async (req, res) => {
+  try {
+    const Test = (await import('./models/Test.js')).default;
+    const Result = (await import('./models/Result.js')).default;
+
+    const { category } = req.query;
+
+    if (!category) {
+      return res.status(400).json({ message: "Category is required" });
+    }
+
+    const officialTests = await Test.find({
+      publishStatus: "approved",
+      category
+    }).select("_id title category");
+
+    const officialTestIds = officialTests.map(t => t._id);
+
+    if (officialTestIds.length === 0) {
+      return res.json({
+        category,
+        totalOfficialTests: 0,
+        ranking: []
+      });
+    }
+
+    const results = await Result.find({
+      testId: { $in: officialTestIds }
+    })
+      .populate("userId", "name email avatar")
+      .populate("testId", "title category")
+      .sort({ submittedAt: -1 });
+
+    const studentMap = new Map();
+
+    results.forEach(r => {
+      if (!r.userId || !r.total) return;
+
+      const uid = r.userId._id.toString();
+      const pct = Math.round((r.score / r.total) * 100);
+
+      if (!studentMap.has(uid)) {
+        studentMap.set(uid, {
+          userId: uid,
+          name: r.userId.name,
+          email: r.userId.email,
+          avatar: r.userId.avatar || "",
+          attempts: 0,
+          totalPct: 0,
+          bestPct: 0,
+          lastAttemptAt: r.submittedAt,
+        });
+      }
+
+      const item = studentMap.get(uid);
+      item.attempts += 1;
+      item.totalPct += pct;
+      item.bestPct = Math.max(item.bestPct, pct);
+
+      if (new Date(r.submittedAt) > new Date(item.lastAttemptAt)) {
+        item.lastAttemptAt = r.submittedAt;
+      }
+    });
+
+    const ranking = Array.from(studentMap.values())
+      .map(item => ({
+        ...item,
+        avgPct: item.attempts ? Math.round(item.totalPct / item.attempts) : 0,
+      }))
+      .sort((a, b) => {
+        if (b.avgPct !== a.avgPct) return b.avgPct - a.avgPct;
+        if (b.bestPct !== a.bestPct) return b.bestPct - a.bestPct;
+        return b.attempts - a.attempts;
+      })
+      .map((item, index) => ({
+        rank: index + 1,
+        ...item,
+      }));
+
+    res.json({
+      category,
+      totalOfficialTests: officialTests.length,
+      ranking
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch official ranking",
+      error: err.message
+    });
   }
 });
 

@@ -69,7 +69,7 @@ export default function Footer() {
           <div className="ft-brand">
             <div className="ft-brand-logo">
               <img src={logo} alt="AcadHub" className="ft-logo-img" />
-              <span className="ft-logo-text">AcadHub</span>
+              {/* <span className="ft-logo-text">AcadHub</span> */}
             </div>
             <p className="ft-brand-tagline">
               Your trusted platform for sharing and accessing quality academic resources.

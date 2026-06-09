@@ -56,7 +56,7 @@ function ResetPassword() {
           <h1>Create a new password</h1>
           <p>Choose something strong that you haven't used before.</p>
         </div>
-        <div className="auth-left-footer">Academic Resources Hub</div>
+        <div className="auth-left-footer">Lernixa</div>
       </motion.div>
 
       <motion.div

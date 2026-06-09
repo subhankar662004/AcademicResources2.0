@@ -95,6 +95,7 @@ const fetchCategories = async () => {
   const [startTime,      setStartTime]      = useState('');
   const [endTime,        setEndTime]        = useState('');
   const [allowMultipleAttempts, setAllowMultipleAttempts] = useState(true);
+  const [isOfficial, setIsOfficial] = useState(false);
   const [editingId,      setEditingId]      = useState('');
   const [question,       setQuestion]       = useState('');
   const [options,        setOptions]        = useState(['', '', '', '']);
@@ -199,6 +200,7 @@ const fetchCategories = async () => {
   setStartTime('');
   setEndTime('');
   setAllowMultipleAttempts(true);
+  setIsOfficial(false);
 };
 
  const createTest = async () => {
@@ -233,8 +235,9 @@ const fetchCategories = async () => {
       duration: Number(duration),
       startTime: startTime || null,
       endTime: endTime || null,
-      allowMultipleAttempts,
-      createdBy: user?.id || user?._id,
+      allowMultipleAttempts: isOfficial ? false : allowMultipleAttempts,
+isOfficial,
+createdBy: user?.id || user?._id,
     }),
   });
 
@@ -272,7 +275,8 @@ const fetchCategories = async () => {
       duration: Number(duration),
       startTime: startTime || null,
       endTime: endTime || null,
-      allowMultipleAttempts,
+      allowMultipleAttempts: isOfficial ? false : allowMultipleAttempts,
+  isOfficial,
     }),
   });
 
@@ -295,6 +299,7 @@ const fetchCategories = async () => {
     setStartTime(t.startTime ? t.startTime.slice(0, 16) : '');
     setEndTime(t.endTime   ? t.endTime.slice(0, 16)   : '');
     setAllowMultipleAttempts(t.allowMultipleAttempts !== false);
+    setIsOfficial(t.publishStatus === 'approved');
     setActiveTab('Create');
   };
 
@@ -600,6 +605,38 @@ const fetchCategories = async () => {
 </div>
 
           </div>
+
+          <div className="at2-field at2-span2">
+  <label className="at2-label">Test Type</label>
+
+  <div className="at2-attempt-toggle">
+    <button
+      type="button"
+      className={`at2-attempt-btn ${!isOfficial ? 'at2-attempt-active-multiple' : ''}`}
+      onClick={() => {
+        setIsOfficial(false);
+        setAllowMultipleAttempts(true);
+      }}
+    >
+      Practice Test
+    </button>
+
+    <button
+      type="button"
+      className={`at2-attempt-btn ${isOfficial ? 'at2-attempt-active-one' : ''}`}
+      onClick={() => {
+        setIsOfficial(true);
+        setAllowMultipleAttempts(false);
+      }}
+    >
+      Official Test
+    </button>
+  </div>
+
+  <p className="at2-attempt-help">
+    Official Test will be published directly and only one attempt will be allowed.
+  </p>
+</div>
 
           <div className="at2-form-actions">
             {editingId ? (

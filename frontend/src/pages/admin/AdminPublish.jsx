@@ -71,6 +71,62 @@ export default function AdminPublish() {
     finally { setActing(null); }
   };
 
+  const handleRemoveOfficial = async (id) => {
+  if (!window.confirm('Remove this test from Official section? Test, questions and results will remain saved.')) {
+    return;
+  }
+
+  setActing(id);
+
+  try {
+    const res = await fetch(`${API_URL}/api/admin/tests/${id}/remove-official`, {
+      method: 'PUT',
+      headers: { ...authHeader(), 'Content-Type': 'application/json' },
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      toast.success('Removed from Official Tests');
+      setRequests(prev => prev.filter(r => r._id !== id));
+    } else {
+      toast.error(data.message || 'Failed to remove from official');
+    }
+  } catch {
+    toast.error('Connection error');
+  } finally {
+    setActing(null);
+  }
+};
+
+const handleDeletePermanent = async (id) => {
+  if (!window.confirm('Delete permanently? This will delete the test, questions, and all student results.')) {
+    return;
+  }
+
+  setActing(id);
+
+  try {
+    const res = await fetch(`${API_URL}/api/admin/tests/${id}`, {
+      method: 'DELETE',
+      headers: authHeader(),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      toast.success('Test deleted permanently');
+      setRequests(prev => prev.filter(r => r._id !== id));
+    } else {
+      toast.error(data.message || 'Failed to delete test');
+    }
+  } catch {
+    toast.error('Connection error');
+  } finally {
+    setActing(null);
+  }
+};
+
   const filtered = requests.filter(r => {
     const q = search.toLowerCase();
     return !q ||
@@ -198,6 +254,53 @@ export default function AdminPublish() {
                     </button>
                   </div>
                 )}
+                {r.publishStatus === 'approved' && (
+  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+    <button
+      onClick={() => handleRemoveOfficial(r._id)}
+      disabled={acting === r._id}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '8px 16px',
+        borderRadius: 8,
+        background: '#fffbeb',
+        color: '#d97706',
+        border: '1.5px solid #fde68a',
+        fontWeight: 600,
+        fontSize: 13,
+        cursor: 'pointer',
+        opacity: acting === r._id ? 0.6 : 1
+      }}
+    >
+      {acting === r._id ? <Loader2 size={13} className="spin"/> : <XCircle size={13}/>}
+      Remove Official
+    </button>
+
+    <button
+      onClick={() => handleDeletePermanent(r._id)}
+      disabled={acting === r._id}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '8px 16px',
+        borderRadius: 8,
+        background: '#fef2f2',
+        color: '#dc2626',
+        border: '1.5px solid #fecaca',
+        fontWeight: 600,
+        fontSize: 13,
+        cursor: 'pointer',
+        opacity: acting === r._id ? 0.6 : 1
+      }}
+    >
+      <XCircle size={13}/>
+      Delete Permanently
+    </button>
+  </div>
+)}
               </div>
             );
           })}

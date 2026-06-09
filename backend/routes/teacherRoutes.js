@@ -68,11 +68,14 @@ router.post("/tests", verifyTeacher, async (req, res) => {
 } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title is required" });
     if (!duration)      return res.status(400).json({ message: "Duration is required" });
+    if (!category?.trim()) {
+  return res.status(400).json({ message: "Category is required" });
+}
 
     const test = new Test({
       title: title.trim(),
       description: description?.trim() || "",
-      category: category?.trim() || "General",
+      category: category.trim(),
       subject:  subject?.trim()   || "",
       duration: Number(duration),
       startTime: startTime || null,
@@ -105,6 +108,9 @@ router.put("/tests/:id", verifyTeacher, async (req, res) => {
   endTime,
   allowMultipleAttempts
 } = req.body;
+if (category !== undefined && !category?.trim()) {
+  return res.status(400).json({ message: "Category is required" });
+}
     Object.assign(test, {
       title:       title?.trim() || test.title,
       description: description?.trim() ?? test.description,
@@ -502,6 +508,11 @@ router.post("/tests/:id/publish-request", verifyTeacher, async (req, res) => {
   try {
     const test = await Test.findOne({ _id: req.params.id, teacherId: req.user._id });
     if (!test) return res.status(404).json({ message: "Test not found" });
+    if (!test.category || test.category === "General") {
+  return res.status(400).json({
+    message: "Please select a valid category before requesting official publish"
+  });
+}
     if (test.publishStatus === 'approved') return res.status(400).json({ message: "Already published" });
     if (test.publishStatus === 'pending')  return res.status(400).json({ message: "Request already pending" });
     test.publishStatus = 'pending';

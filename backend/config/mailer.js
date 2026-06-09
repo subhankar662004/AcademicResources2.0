@@ -14,13 +14,13 @@ export const sendOTPEmail = async (email, otp, name) => {
     const response = await axios.post(
       'https://api.brevo.com/v3/smtp/email',
       {
-        sender: { name: 'Academic Resources Hub', email: EMAIL_FROM },
+        sender: { name: 'Learnixa', email: EMAIL_FROM },
         to: [{ email }],
         subject: 'Your OTP Verification Code',
         htmlContent: `
           <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px;">
             <div style="text-align:center;margin-bottom:20px;">
-              <h2 style="color:#2563eb;margin:8px 0 0;">Academic Resources Hub</h2>
+              <h2 style="color:#2563eb;margin:8px 0 0;">Learnixa</h2>
             </div>
             <p style="color:#374151;">Hi <strong>${name}</strong>,</p>
             <p style="color:#374151;">Use the OTP below to verify your email. It expires in <strong>10 minutes</strong>.</p>
@@ -55,13 +55,13 @@ export const sendResultEmail = async (teacherEmail, teacherName, studentName, te
   const response = await axios.post(
     'https://api.brevo.com/v3/smtp/email',
     {
-      sender: { name: 'Academic Resources Hub', email: EMAIL_FROM },
+      sender: { name: 'Learnixa', email: EMAIL_FROM },
       to: [{ email: teacherEmail, name: teacherName }],
       subject: `📋 New submission: ${studentName} completed "${testTitle}"`,
       htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px;">
           <div style="text-align:center;margin-bottom:20px;">
-            <h2 style="color:#2563eb;margin:8px 0 0;">Academic Resources Hub</h2>
+            <h2 style="color:#2563eb;margin:8px 0 0;">Learnixa</h2>
             <p style="color:#6b7280;font-size:13px;margin:4px 0 0;">Test Result Notification</p>
           </div>
           <p style="color:#374151;">Hi <strong>${teacherName}</strong>,</p>
@@ -95,13 +95,13 @@ export const sendPasswordResetEmail = async (email, name, resetUrl) => {
   const response = await axios.post(
     'https://api.brevo.com/v3/smtp/email',
     {
-      sender: { name: 'Academic Resources Hub', email: EMAIL_FROM },
+      sender: { name: 'Learnixa', email: EMAIL_FROM },
       to: [{ email }],
       subject: 'Reset your password',
       htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px;">
           <div style="text-align:center;margin-bottom:20px;">
-            <h2 style="color:#2563eb;margin:8px 0 0;">Academic Resources Hub</h2>
+            <h2 style="color:#2563eb;margin:8px 0 0;">Learnixa</h2>
           </div>
           <p style="color:#374151;">Hi <strong>${name}</strong>,</p>
           <p style="color:#374151;">We received a request to reset your password. Click the button below to choose a new one. This link expires in <strong>1 hour</strong>.</p>

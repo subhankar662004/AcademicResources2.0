@@ -9,46 +9,97 @@ import { sendNotification } from "../index.js";
 const router = express.Router();
 
 // Create new test — admin only
+// Create new test — admin only
 router.post("/create", verifyAdmin, async (req, res) => {
   try {
     const {
-  title,
-  description,
-  category,
-  subject,
-  duration,
-  startTime,
-  endTime,
-  allowMultipleAttempts,
-  createdBy
-} = req.body;
-    if (!title || !duration) return res.status(400).json({ message: "title and duration are required" });
-    const test = new Test({
-      title, description,
-      category: category || "CSE",
-      subject: subject || "",
+      title,
+      description,
+      category,
+      subject,
       duration,
+      startTime,
+      endTime,
+      allowMultipleAttempts,
+      createdBy,
+      isOfficial
+    } = req.body;
+
+    if (!title?.trim()) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+
+    if (!category?.trim()) {
+      return res.status(400).json({ message: "Category is required" });
+    }
+
+    if (!duration) {
+      return res.status(400).json({ message: "Duration is required" });
+    }
+
+    const test = new Test({
+      title: title.trim(),
+      description: description?.trim() || "",
+      category: category.trim(),
+      subject: subject?.trim() || "",
+      duration: Number(duration),
       startTime: startTime || null,
       endTime: endTime || null,
-      allowMultipleAttempts: allowMultipleAttempts !== undefined ? allowMultipleAttempts : true,
+
+      // Admin official create hole default one attempt
+      allowMultipleAttempts: isOfficial
+        ? false
+        : (allowMultipleAttempts !== undefined ? allowMultipleAttempts : true),
+
       createdBy: createdBy || req.userId,
+
+      // Admin direct official create
+      publishStatus: isOfficial ? "approved" : "none",
+      approvedAt: isOfficial ? new Date() : null,
+      publishNote: "",
     });
+
     await test.save();
     res.status(201).json(test);
   } catch (error) {
-    res.status(500).json({ message: "Failed to create test", error: error.message });
+    res.status(500).json({
+      message: "Failed to create test",
+      error: error.message
+    });
   }
 });
 
 // Get all tests category-wise — public (students browse tests)
+// Get tests category-wise
 router.get("/", async (req, res) => {
   try {
     const query = {};
-    if (req.query.category) query.category = req.query.category;
-    const tests = await Test.find(query).sort({ createdAt: -1 });
+
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    // Practice page er jonno official tests hide
+    if (req.query.type === "practice") {
+      query.publishStatus = { $ne: "approved" };
+    }
+
+    // Official tests only
+    if (req.query.type === "official") {
+      query.publishStatus = "approved";
+    }
+
+    const tests = await Test.find(query).sort({
+      approvedAt: -1,
+      createdAt: -1
+    });
+
     res.json(tests);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch tests", error: error.message });
+    res.status(500).json({
+      message: "Failed to fetch tests",
+      error: error.message
+    });
   }
 });
 
@@ -56,36 +107,61 @@ router.get("/", async (req, res) => {
 router.put("/:id", verifyAdmin, async (req, res) => {
   try {
     const {
-  title,
-  description,
-  category,
-  subject,
-  duration,
-  startTime,
-  endTime,
-  allowMultipleAttempts
-} = req.body;
-    const test = await Test.findByIdAndUpdate(
-      req.params.id,
-      {
-  title,
-  description,
-  category,
-  subject,
-  duration,
-  startTime: startTime || null,
-  endTime: endTime || null,
-  allowMultipleAttempts: allowMultipleAttempts !== undefined ? allowMultipleAttempts : true
-},
-      { new: true }
-    );
-    if (!test) return res.status(404).json({ message: "Test not found" });
+      title,
+      description,
+      category,
+      subject,
+      duration,
+      startTime,
+      endTime,
+      allowMultipleAttempts,
+      isOfficial
+    } = req.body;
+
+    const test = await Test.findById(req.params.id);
+
+    if (!test) {
+      return res.status(404).json({ message: "Test not found" });
+    }
+
+    if (title !== undefined) test.title = title.trim();
+    if (description !== undefined) test.description = description?.trim() || "";
+    if (category !== undefined) test.category = category?.trim() || test.category;
+    if (subject !== undefined) test.subject = subject?.trim() || "";
+    if (duration !== undefined) test.duration = Number(duration);
+    if (startTime !== undefined) test.startTime = startTime || null;
+    if (endTime !== undefined) test.endTime = endTime || null;
+
+    if (allowMultipleAttempts !== undefined) {
+      test.allowMultipleAttempts = allowMultipleAttempts;
+    }
+
+    // Admin official ON korle
+    if (isOfficial === true) {
+      test.publishStatus = "approved";
+      test.approvedAt = new Date();
+      test.publishNote = "";
+      test.allowMultipleAttempts = false;
+    }
+
+    // Admin nijer direct official test practice korte chaile
+    // Teacher approved test ke accidentally practice banabe na
+    if (isOfficial === false && !test.teacherId) {
+      test.publishStatus = "none";
+      test.approvedAt = null;
+      test.publishNote = "";
+    }
+
+    await test.save();
+
     res.json(test);
   } catch (error) {
-    res.status(500).json({ message: "Failed to update test", error: error.message });
+    res.status(500).json({
+      message: "Failed to update test",
+      error: error.message
+    });
   }
 });
-
 // Add question to a test — admin only
 router.post("/:testId/question", verifyAdmin, async (req, res) => {
   try {
@@ -188,10 +264,15 @@ router.get("/publish-requests", verifyAdmin, async (req, res) => {
 router.put("/:id/publish-approve", verifyAdmin, async (req, res) => {
   try {
     const test = await Test.findByIdAndUpdate(
-      req.params.id,
-      { publishStatus: 'approved', publishNote: '' },
-      { new: true }
-    ).populate("teacherId", "name email");
+  req.params.id,
+  {
+    publishStatus: "approved",
+    publishNote: "",
+    approvedAt: new Date(),
+    allowMultipleAttempts: false
+  },
+  { new: true }
+).populate("teacherId", "name email");
     if (!test) return res.status(404).json({ message: "Test not found" });
 
     // Notify all students about the newly published test
@@ -232,6 +313,32 @@ router.put("/:id/publish-reject", verifyAdmin, async (req, res) => {
   }
 });
 
+// Remove from official only — admin only
+router.put("/:id/remove-official", verifyAdmin, async (req, res) => {
+  try {
+    const test = await Test.findById(req.params.id);
+
+    if (!test) {
+      return res.status(404).json({ message: "Test not found" });
+    }
+
+    test.publishStatus = "none";
+    test.publishNote = "";
+    test.approvedAt = null;
+
+    await test.save();
+
+    res.json({
+      message: "Test removed from official section",
+      test
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to remove official test",
+      error: error.message
+    });
+  }
+});
 // Delete test and all its data — admin only
 router.delete("/:id", verifyAdmin, async (req, res) => {
   try {

@@ -169,8 +169,30 @@ export default function TeacherDashboard() {
     const pB = b.total ? b.score / b.total : 0;
     return pB - pA;
   }), [results]);
-  const pgMyTests  = usePagination(tests, 6);
-  const pgResults  = usePagination(sortedResults, 15);
+  const [resultMode, setResultMode] = useState("all");
+
+const practiceTests = useMemo(
+  () => tests.filter(t => t.publishStatus !== "approved"),
+  [tests]
+);
+
+const officialTests = useMemo(
+  () => tests.filter(t => t.publishStatus === "approved"),
+  [tests]
+);
+
+const pgMyTests = usePagination(practiceTests, 6);
+const pgOfficialTests = usePagination(officialTests, 6);
+const pgResults = usePagination(sortedResults, 15);
+
+  const canCopyTestLink = (test) => {
+  if (!test) return false;
+
+  const currentUserId = String(user?.id || user?._id || '');
+  const teacherOwnerId = String(test.teacherId?._id || test.teacherId || '');
+
+  return teacherOwnerId === currentUserId;
+};
 
   /* ── Load my tests ── */
   useEffect(() => {
@@ -296,8 +318,11 @@ export default function TeacherDashboard() {
 
   /* ── Load results ── */
   const loadResults = async (testId) => {
-    setResTestId(testId);
-    setTab("results");
+  const selected = tests.find(t => t._id === testId);
+  setResultMode(selected?.publishStatus === "approved" ? "official" : "practice");
+
+  setResTestId(testId);
+  setTab("results");
     setResLoading(true);
     setResQuestions([]);
     try {
@@ -561,10 +586,11 @@ setAllowMultipleAttempts(true);
       {/* Tabs */}
       <div className="td-tabs">
         {[
-          { id:"tests",   label:"My Tests",     Icon:ClipboardList },
-          { id:"create",  label:"Create Test",  Icon:Plus },
-          { id:"results", label:"Student Results", Icon:BarChart2 },
-        ].map(({ id, label, Icon }) => (
+  { id:"tests",    label:"Practice Tests", Icon:ClipboardList },
+  { id:"official", label:"Official Tests", Icon:BadgeCheck },
+  { id:"create",   label:"Create Test",    Icon:Plus },
+  { id:"results",  label:"Student Results", Icon:BarChart2 },
+].map(({ id, label, Icon }) => (
           <button key={id} className={`td-tab${tab===id?" td-tab-active":""}`} onClick={() => setTab(id)}>
             <Icon size={15}/> {label}
           </button>
@@ -576,7 +602,7 @@ setAllowMultipleAttempts(true);
         <div className="td-panel">
           <div className="td-panel-hdr">
             <div>
-              <h2>My Tests <span className="count-badge">{tests.length}</span></h2>
+              <h2>Practice Tests <span className="count-badge">{practiceTests.length}</span></h2>
               <p style={{ fontSize:13, color:"var(--text-muted)" }}>Share the link with your students to let them take the test</p>
             </div>
             <button className="btn btn-primary btn-sm" onClick={() => { resetCreate(); setTab("create"); }}>
@@ -586,7 +612,7 @@ setAllowMultipleAttempts(true);
 
           {loading ? (
             <div className="loading-state"><Loader2 size={28} className="spin" color="var(--primary)"/><p>Loading…</p></div>
-          ) : tests.length === 0 ? (
+          ) : practiceTests.length === 0 ? (
             <div className="empty-state" style={{ padding:"60px 24px" }}>
               <div className="empty-state-icon"><ClipboardList size={42} color="var(--primary)" strokeWidth={1.5}/></div>
               <h3>No tests yet</h3>
@@ -595,8 +621,9 @@ setAllowMultipleAttempts(true);
                 <Plus size={14}/> Create First Test
               </button>
             </div>
-          ) : (
-            <div className="td-test-grid">
+                    ) : (
+            <>
+              <div className="td-test-grid">
               {pgMyTests.slice.map(t => (
                 <div key={t._id} className="td-test-card">
                   <div className="td-tc-top">
@@ -689,9 +716,10 @@ setAllowMultipleAttempts(true);
                     </div>
                   )}
 
-                  {/* Share code panel */}
-                  <ShareCodePanel code={t.shareCode} shareUrl={shareUrl(t.shareCode)} />
-
+                 {/* Share code panel */}
+{canCopyTestLink(t) && (
+  <ShareCodePanel code={t.shareCode} shareUrl={shareUrl(t.shareCode)} />
+)}
                   {/* Publish status badge */}
                   {t.publishStatus === 'approved' && (
                     <div className="td-publish-badge td-publish-approved">
@@ -837,12 +865,103 @@ setAllowMultipleAttempts(true);
                     </div>
                   )}
                 </div>
-              ))}
+                            ))}
+              </div>
+
               <Pagination {...pgMyTests} />
-            </div>
+            </>
           )}
         </div>
       )}
+
+      {/* ════ OFFICIAL TESTS ════ */}
+{tab === "official" && (
+  <div className="td-panel">
+    <div className="td-panel-hdr">
+      <div>
+        <h2>
+          Official Tests <span className="count-badge">{officialTests.length}</span>
+        </h2>
+        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+          These tests are approved by admin and visible in Official Tests section.
+        </p>
+      </div>
+    </div>
+
+    {loading ? (
+      <div className="loading-state">
+        <Loader2 size={28} className="spin" color="var(--primary)" />
+        <p>Loading…</p>
+      </div>
+    ) : officialTests.length === 0 ? (
+      <div className="empty-state" style={{ padding: "60px 24px" }}>
+        <div className="empty-state-icon">
+          <BadgeCheck size={42} color="#059669" strokeWidth={1.5} />
+        </div>
+        <h3>No official tests yet</h3>
+        <p>When admin approves your publish request, tests will appear here.</p>
+      </div>
+    ) : (
+      <>
+        <div className="td-test-grid">
+          {pgOfficialTests.slice.map(t => (
+            <div key={t._id} className="td-test-card">
+              <div className="td-test-card-head">
+                <div>
+                  <h3>{t.title}</h3>
+                  <div className="td-test-meta">
+                    <span><BookOpen size={12}/> {t.category || "General"}</span>
+                    <span><Timer size={12}/> {t.duration} min</span>
+                    <span style={{ color: "#059669", fontWeight: 800 }}>
+                      <BadgeCheck size={12}/> Official
+                    </span>
+                    <span style={{ color: "#dc2626", fontWeight: 800 }}>
+                      One Attempt
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {t.description && (
+                <p className="td-test-desc">{t.description}</p>
+              )}
+
+              {canCopyTestLink(t) && (
+                <ShareCodePanel code={t.shareCode} shareUrl={shareUrl(t.shareCode)} />
+              )}
+
+              <div className="td-test-actions">
+                <button className="btn btn-outline btn-sm" onClick={() => toggleExpand(t._id)}>
+                  <Eye size={13}/> Questions
+                </button>
+
+                <button className="btn btn-outline btn-sm" onClick={() => downloadTestPdf(t._id, t.title)}>
+                  <Download size={13}/> PDF
+                </button>
+
+                <button className="btn btn-primary btn-sm" onClick={() => loadResults(t._id)}>
+                  <BarChart2 size={13}/> Official Results
+                </button>
+              </div>
+
+              {expandedTest === t._id && (
+                <div className="td-q-list">
+                  {(testQs[t._id] || []).map((q, idx) => (
+                    <div key={q._id} className="td-q-item">
+                      <strong>Q{idx + 1}.</strong> {q.question}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <Pagination {...pgOfficialTests} />
+      </>
+    )}
+  </div>
+)}
 
       {/* ════ CREATE TEST ════ */}
       {tab === "create" && (
@@ -930,6 +1049,7 @@ setAllowMultipleAttempts(true);
                 </div>
               </div>
               <ShareCodePanel code={createdTest.shareCode} shareUrl={shareUrl(createdTest.shareCode)} />
+              
 
               {/* Existing questions */}
               {questions.length > 0 && (

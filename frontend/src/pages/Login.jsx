@@ -100,7 +100,7 @@ function Login() {
           <div className="auth-brand-icon">
             <GraduationCap size={40} color="white" strokeWidth={1.5} />
           </div>
-          <h1>Academic Resources Hub</h1>
+          <h1>Study Material Hub</h1>
           <p>Your gateway to knowledge, resources, and academic excellence.</p>
         </div>
         <div className="auth-features">
