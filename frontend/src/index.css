@@ -10295,3 +10295,776 @@ body.test-active-mode .btm-bar {
   font-size: 18px;
   color: #059669;
 }
+
+.my-rank-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  border: 1.5px solid #c7d2fe;
+}
+
+.my-rank-banner strong {
+  display: block;
+  font-size: 13px;
+  color: #4f46e5;
+}
+
+.my-rank-banner span {
+  display: block;
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.my-rank-score {
+  text-align: right;
+  font-size: 22px;
+  font-weight: 900;
+  color: #059669;
+}
+
+.my-rank-score small {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.official-rank-you {
+  background: #ecfdf5 !important;
+  border-color: #86efac !important;
+}
+
+.view-full-rank-btn {
+  margin-top: 14px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-white);
+  color: var(--primary);
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rank-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.rank-modal {
+  width: 100%;
+  max-width: 620px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: var(--bg-white);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+}
+
+.rank-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.rank-modal-head h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.rank-modal-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.rank-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-white);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* =============================
+   Compact Professional Official Ranking
+   ============================= */
+
+.official-rank-card {
+  margin-top: 18px;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.official-rank-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.official-rank-head h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.official-rank-head p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.official-rank-head .btn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.my-rank-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  margin-bottom: 12px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  border: 1px solid #c7d2fe;
+}
+
+.my-rank-banner strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #4f46e5;
+}
+
+.my-rank-banner span {
+  display: block;
+  margin-top: 1px;
+  font-size: 17px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.my-rank-score {
+  text-align: right;
+  font-size: 20px;
+  font-weight: 900;
+  color: #059669;
+  line-height: 1.1;
+}
+
+.my-rank-score small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.official-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.official-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 13px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.official-rank-you {
+  background: #ecfdf5 !important;
+  border-color: #86efac !important;
+}
+
+.official-rank-position {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2ff;
+  color: #4f46e5;
+  flex-shrink: 0;
+}
+
+.official-rank-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+}
+
+.official-rank-user img,
+.official-rank-user > span {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.official-rank-user img {
+  object-fit: cover;
+}
+
+.official-rank-user > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.official-rank-user strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.official-rank-user small {
+  display: block;
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.official-rank-score {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.official-rank-score strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 900;
+  color: #059669;
+  line-height: 1.1;
+}
+
+.official-rank-score small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.view-full-rank-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 11px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Full ranking popup */
+.rank-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.rank-modal-head {
+  margin-bottom: 14px;
+}
+
+.rank-modal-head h3 {
+  font-size: 17px;
+}
+
+.rank-modal-head p {
+  font-size: 12.5px;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .official-rank-card {
+    padding: 15px 14px;
+    border-radius: 14px;
+    margin-top: 16px;
+  }
+
+  .official-rank-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .official-rank-head h2 {
+    font-size: 16px;
+  }
+
+  .official-rank-head p {
+    font-size: 12px;
+  }
+
+  .official-rank-head .btn {
+    width: 100%;
+  }
+
+  .my-rank-banner {
+    padding: 10px 12px;
+  }
+
+  .my-rank-banner span {
+    font-size: 15px;
+  }
+
+  .my-rank-score {
+    font-size: 17px;
+  }
+
+  .official-rank-row {
+    padding: 9px 10px;
+    gap: 8px;
+  }
+
+  .official-rank-position {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+  }
+
+  .official-rank-user img,
+  .official-rank-user > span {
+    width: 30px;
+    height: 30px;
+  }
+
+  .official-rank-user strong {
+    font-size: 12.5px;
+  }
+
+  .official-rank-user small {
+    font-size: 10px;
+  }
+
+  .official-rank-score strong {
+    font-size: 15px;
+  }
+
+  .official-rank-score small {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .official-rank-row {
+    align-items: flex-start;
+  }
+
+  .official-rank-score {
+    min-width: 48px;
+  }
+
+  .my-rank-banner {
+    align-items: flex-start;
+  }
+}
+
+/* Extra compact ranking for phone screen */
+@media (max-width: 640px) {
+  .official-rank-card {
+    padding: 12px 10px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+  }
+
+  .official-rank-head {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .official-rank-head h2 {
+    font-size: 14px;
+    gap: 5px;
+  }
+
+  .official-rank-head h2 svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .official-rank-head p {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .official-rank-head .btn {
+    padding: 6px 10px;
+    font-size: 11.5px;
+    border-radius: 8px;
+  }
+
+  .my-rank-banner {
+    padding: 8px 10px;
+    margin-bottom: 9px;
+    border-radius: 10px;
+  }
+
+  .my-rank-banner strong {
+    font-size: 10.5px;
+  }
+
+  .my-rank-banner span {
+    font-size: 13.5px;
+  }
+
+  .my-rank-score {
+    font-size: 15px;
+  }
+
+  .my-rank-score small {
+    font-size: 9px;
+  }
+
+  .official-rank-list {
+    gap: 6px;
+  }
+
+  .official-rank-row {
+    padding: 7px 8px;
+    gap: 7px;
+    border-radius: 10px;
+  }
+
+  .official-rank-position {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+
+  .official-rank-position svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .official-rank-user {
+    gap: 7px;
+  }
+
+  .official-rank-user img,
+  .official-rank-user > span {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+
+  .official-rank-user strong {
+    font-size: 11.5px;
+  }
+
+  .official-rank-user small {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .official-rank-score strong {
+    font-size: 13.5px;
+  }
+
+  .official-rank-score small {
+    font-size: 9px;
+  }
+
+  .view-full-rank-btn {
+    margin-top: 9px;
+    padding: 7px 10px;
+    font-size: 11.5px;
+    border-radius: 9px;
+  }
+
+  .rank-modal {
+    max-width: 94vw;
+    padding: 13px;
+    border-radius: 14px;
+  }
+
+  .rank-modal-head h3 {
+    font-size: 14px;
+  }
+
+  .rank-modal-head p {
+    font-size: 11px;
+  }
+
+  .rank-modal-close {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    border-radius: 8px;
+  }
+}
+
+/* =============================
+   Take Test Phone Screen Fix
+   ============================= */
+
+@media (max-width: 640px) {
+  body.test-active-mode {
+    padding-top: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .test-active-page {
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-height: 100vh !important;
+    overflow-x: hidden !important;
+    padding: 0 0 88px !important;
+    background: #f8fafc !important;
+  }
+
+  .test-topbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 80 !important;
+    padding: 8px 10px !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  .test-body-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 10px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .qnav-sidebar {
+    display: none !important;
+  }
+
+  .test-questions-area {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .question-card-adv {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 15px 13px !important;
+    margin: 0 0 12px !important;
+    border-radius: 15px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .qca-text {
+    font-size: 17px !important;
+    line-height: 1.45 !important;
+    margin-bottom: 15px !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .options-adv {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+    width: 100% !important;
+  }
+
+  .option-adv {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 52px !important;
+    padding: 11px 10px !important;
+    gap: 10px !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+  }
+
+  .oa-letter {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 10px !important;
+    font-size: 14px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .oa-text {
+    font-size: 15.5px !important;
+    line-height: 1.45 !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .qca-nav-row {
+    margin-top: 13px !important;
+    padding-top: 12px !important;
+    gap: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .qca-nav-row .btn {
+    padding: 8px 9px !important;
+    font-size: 13px !important;
+    border-radius: 9px !important;
+  }
+
+  .qca-answered-pill {
+    font-size: 12px !important;
+    white-space: nowrap !important;
+  }
+
+  .test-submit-bar {
+    margin-top: 12px !important;
+    padding: 12px 13px !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .tsb-info {
+    font-size: 13px !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+  }
+
+  .test-submit-bar .submit-btn-main {
+    display: none !important;
+  }
+
+  .floating-submit {
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 120 !important;
+    padding: 8px 10px 10px !important;
+    background: rgba(248, 250, 252, 0.96) !important;
+    backdrop-filter: blur(10px) !important;
+    border-top: 1px solid #e2e8f0 !important;
+  }
+
+  .floating-submit-progress {
+    height: 4px !important;
+    border-radius: 999px !important;
+    background: #e2e8f0 !important;
+    margin-bottom: 8px !important;
+    overflow: hidden !important;
+  }
+
+  .floating-submit-progress > div {
+    height: 100% !important;
+    background: linear-gradient(90deg, #2563eb, #7c3aed) !important;
+  }
+
+  .floating-submit-btn {
+    width: 100% !important;
+    border-radius: 13px !important;
+    padding: 13px !important;
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .question-card-adv {
+    padding: 13px 11px !important;
+  }
+
+  .qca-text {
+    font-size: 16px !important;
+  }
+
+  .option-adv {
+    padding: 10px 9px !important;
+    gap: 8px !important;
+  }
+
+  .oa-letter {
+    width: 31px !important;
+    height: 31px !important;
+    min-width: 31px !important;
+    font-size: 13px !important;
+  }
+
+  .oa-text {
+    font-size: 14.5px !important;
+  }
+
+  .qca-nav-row .btn {
+    padding: 7px 8px !important;
+    font-size: 12.5px !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .floating-submit {
+    display: none !important;
+  }
+}

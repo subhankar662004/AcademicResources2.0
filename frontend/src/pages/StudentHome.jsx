@@ -103,8 +103,14 @@ export default function StudentHome() {
   const [myUploads, setMyUploads] = useState([]);
   const [ranking, setRanking] = useState([]);
 const [rankLoading, setRankLoading] = useState(true);
+const [showFullRanking, setShowFullRanking] = useState(false);
 
   const selectedCategory = localStorage.getItem('selectedCategory');
+  const currentUserId = String(user?.id || user?._id || '');
+
+const myRank = ranking.find(r => String(r.userId) === currentUserId);
+
+const visibleRanking = ranking.slice(0, 4);
 
   // All hooks must come before any conditional return (React Rules of Hooks)
   useEffect(() => {
@@ -303,69 +309,104 @@ const [rankLoading, setRankLoading] = useState(true);
         </form>
       </motion.div>
 
-            {/* ── Official Ranking ── */}
-      <motion.div
-        className="official-rank-card"
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.44 }}
-      >
-        <div className="official-rank-head">
+            
+      {/* ── Official Ranking ── */}
+<motion.div
+  className="official-rank-card"
+  initial={{ opacity: 0, y: 14 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.3, duration: 0.44 }}
+>
+  <div className="official-rank-head">
+    <div>
+      <h2>
+        <Trophy size={18} color="#d97706" />
+        {selectedCategory} Official Ranking
+      </h2>
+      <p>Ranking is based only on official test results.</p>
+    </div>
+
+    <button
+      className="btn btn-outline btn-sm"
+      onClick={() => navigate('/official-tests')}
+    >
+      Official Tests <ArrowRight size={14} />
+    </button>
+  </div>
+
+  {rankLoading ? (
+    <div className="official-rank-loading">
+      <Loader2 size={22} className="spin" />
+      Loading ranking…
+    </div>
+  ) : ranking.length === 0 ? (
+    <div className="official-rank-empty">
+      No official ranking yet. Attempt official tests to appear here.
+    </div>
+  ) : (
+    <>
+      {myRank && (
+        <div className="my-rank-banner">
           <div>
-            <h2>
-              <Trophy size={18} color="#d97706" />
-              {selectedCategory} Official Ranking
-            </h2>
-            <p>Ranking is based only on official test results.</p>
+            <strong>Your Rank</strong>
+            <span>#{myRank.rank} in {selectedCategory}</span>
           </div>
 
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => navigate('/official-tests')}
-          >
-            Official Tests <ArrowRight size={14} />
-          </button>
+          <div className="my-rank-score">
+            {myRank.avgPct}%
+            <small>Best {myRank.bestPct}%</small>
+          </div>
         </div>
+      )}
 
-        {rankLoading ? (
-          <div className="official-rank-loading">
-            <Loader2 size={22} className="spin" />
-            Loading ranking…
-          </div>
-        ) : ranking.length === 0 ? (
-          <div className="official-rank-empty">
-            No official ranking yet. Attempt official tests to appear here.
-          </div>
-        ) : (
-          <div className="official-rank-list">
-            {ranking.slice(0, 10).map((r) => (
-              <div key={r.userId} className="official-rank-row">
-                <div className={`official-rank-position rank-${r.rank}`}>
-                  {r.rank <= 3 ? <Medal size={16} /> : r.rank}
-                </div>
+      <div className="official-rank-list">
+        {visibleRanking.map((r) => {
+          const isMe = String(r.userId) === currentUserId;
 
-                <div className="official-rank-user">
-                  {r.avatar ? (
-                    <img src={r.avatar} alt={r.name} />
-                  ) : (
-                    <span>{r.name?.[0]?.toUpperCase() || 'U'}</span>
-                  )}
+          return (
+            <div
+              key={r.userId}
+              className={`official-rank-row ${isMe ? 'official-rank-you' : ''}`}
+            >
+              <div className={`official-rank-position rank-${r.rank}`}>
+                {r.rank <= 3 ? <Medal size={16} /> : r.rank}
+              </div>
 
-                  <div>
-                    <strong>{r.name || 'Student'}</strong>
-                    <small>{r.attempts} official attempt{r.attempts > 1 ? 's' : ''}</small>
-                  </div>
-                </div>
+              <div className="official-rank-user">
+                {r.avatar ? (
+                  <img src={r.avatar} alt={r.name} />
+                ) : (
+                  <span>{r.name?.[0]?.toUpperCase() || 'U'}</span>
+                )}
 
-                <div className="official-rank-score">
-                  <strong>{r.avgPct}%</strong>
-                  <small>Best {r.bestPct}%</small>
+                <div>
+                  <strong>{isMe ? 'You' : (r.name || 'Student')}</strong>
+                  <small>{r.attempts} official attempt{r.attempts > 1 ? 's' : ''}</small>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </motion.div>
+
+              <div className="official-rank-score">
+                <strong>{r.avgPct}%</strong>
+                <small>Best {r.bestPct}%</small>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {ranking.length > 4 && (
+        <button
+          type="button"
+          className="view-full-rank-btn"
+          onClick={() => setShowFullRanking(true)}
+        >
+          View full ranking <ArrowRight size={14} />
+        </button>
+      )}
+    </>
+  )}
+</motion.div>
+
 
       {/* ── Subject performance breakdown ── */}
       {subjectData.length > 0 && !loading && (
@@ -601,6 +642,60 @@ const [rankLoading, setRankLoading] = useState(true);
           )}
         </div>
       </div>
+      {showFullRanking && (
+  <div className="rank-modal-overlay" onClick={() => setShowFullRanking(false)}>
+    <div className="rank-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="rank-modal-head">
+        <div>
+          <h3>{selectedCategory} Full Official Ranking</h3>
+          <p>All students ranked by official test results</p>
+        </div>
+
+        <button
+          className="rank-modal-close"
+          onClick={() => setShowFullRanking(false)}
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="official-rank-list">
+        {ranking.map((r) => {
+          const isMe = String(r.userId) === currentUserId;
+
+          return (
+            <div
+              key={r.userId}
+              className={`official-rank-row ${isMe ? 'official-rank-you' : ''}`}
+            >
+              <div className={`official-rank-position rank-${r.rank}`}>
+                {r.rank <= 3 ? <Medal size={16} /> : r.rank}
+              </div>
+
+              <div className="official-rank-user">
+                {r.avatar ? (
+                  <img src={r.avatar} alt={r.name} />
+                ) : (
+                  <span>{r.name?.[0]?.toUpperCase() || 'U'}</span>
+                )}
+
+                <div>
+                  <strong>{isMe ? 'You' : (r.name || 'Student')}</strong>
+                  <small>{r.attempts} official attempt{r.attempts > 1 ? 's' : ''}</small>
+                </div>
+              </div>
+
+              <div className="official-rank-score">
+                <strong>{r.avgPct}%</strong>
+                <small>Best {r.bestPct}%</small>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import CustomSelect from '../components/CustomSelect';
 import { usePagination } from '../hooks/usePagination';
 import Pagination from '../components/Pagination';
@@ -334,22 +334,42 @@ function Resources() {
     }
   };
 
-  const baseResources = selectedFolder
-    ? resources.filter(r => {
-        const fId = typeof r.folder === 'object' ? r.folder?._id : r.folder;
-        return fId === selectedFolder._id;
-      })
-    : resources;
+ const baseResources = useMemo(() => {
+  if (!selectedFolder) return resources;
 
-  const filtered = {
-    folders: activeTab === 'saved' ? [] : folders.filter(f => f.name?.toLowerCase().includes(searchTerm.toLowerCase())),
-    resources: baseResources.filter(r => {
-      const matchSearch = r.title?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchSaved  = activeTab === 'saved' ? savedIds.includes(r._id) : true;
-      return matchSearch && matchSaved;
-    }),
-  };
-  const pgResources = usePagination(filtered.resources, 12);
+  return resources.filter(r => {
+    const fId = typeof r.folder === 'object' ? r.folder?._id : r.folder;
+    return fId === selectedFolder._id;
+  });
+}, [resources, selectedFolder]);
+
+  const filteredFolders = useMemo(() => {
+  if (activeTab === 'saved') return [];
+
+  return folders.filter(f =>
+    f.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+}, [folders, searchTerm, activeTab]);
+
+const filteredResources = useMemo(() => {
+  return baseResources.filter(r => {
+    const q = searchTerm.toLowerCase();
+
+    const matchSearch =
+      !q ||
+      r.title?.toLowerCase().includes(q) ||
+      r.description?.toLowerCase().includes(q) ||
+      r.uploadedBy?.name?.toLowerCase().includes(q);
+
+    const matchSaved = activeTab === 'saved'
+      ? savedIds.includes(r._id)
+      : true;
+
+    return matchSearch && matchSaved;
+  });
+}, [baseResources, searchTerm, activeTab, savedIds]);
+
+const pgResources = usePagination(filteredResources, 12);
 
   if (!selectedCategory) return null;
 
@@ -456,11 +476,11 @@ function Resources() {
         )}
 
         {/* Folders */}
-        {!loading && filtered.folders.length > 0 && (
+        {!loading && filteredFolders.length > 0 && (
           <div style={{ marginBottom: 36 }}>
-            <h2 className="section-heading">Folders <span className="count-badge">{filtered.folders.length}</span></h2>
+            <h2 className="section-heading">Folders <span className="count-badge">{filteredFolders.length}</span></h2>
             <div className="grid-cards">
-              {filtered.folders.map(folder => (
+              {filteredFolders.map(folder => (
                 <div
                   key={folder._id}
                   className={`folder-card ${selectedFolder?._id === folder._id ? 'selected' : ''}`}
@@ -542,7 +562,7 @@ function Resources() {
         {/* Resources */}
         <h2 className="section-heading">
           {selectedFolder ? `${selectedFolder.name} Resources` : `All ${selectedCategory} Resources`}
-          <span className="count-badge">{filtered.resources.length}</span>
+          <span className="count-badge">{filteredResources.length}</span>
         </h2>
 
         {loading ? (
@@ -551,6 +571,7 @@ function Resources() {
             <p>Loading resources…</p>
           </div>
         ) : pgResources.total > 0 ? (
+          <>
           <div className="grid-cards">
             {pgResources.slice.map(resource => {
               const ext      = getExt(resource);
@@ -615,9 +636,11 @@ function Resources() {
                   </div>
                 </div>
               );
-            })}
-            <Pagination {...pgResources} />
+                        })}
           </div>
+
+          <Pagination {...pgResources} />
+        </>
         ) : (
           <div className="empty-state">
             <div className="empty-state-icon"><BookOpen size={40} color="var(--primary)" strokeWidth={1.5} /></div>
